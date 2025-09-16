@@ -9,6 +9,8 @@ import DetalleInsumo from "./views/DetalleInsumo";
 import ListaAlumnos from "./views/ListaAlumnos";
 import ListaInsumos from "./views/ListaInsumos";
 import Login from "./views/Login";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 
 export const router = createBrowserRouter([
     {
@@ -23,9 +25,15 @@ export const router = createBrowserRouter([
                 path: 'FichaAlumno',
                 element: <FichaAlumno/>,
             },
+            /*
             {
                 path: 'CalendarioMensual',
                 element: <CalendarioMensual/>,
+            },
+            */
+            {
+                path: 'CalendarioMensual',
+                element: <Calendar/>,
             },
             {
                 path: 'CalendarioSemanal',
