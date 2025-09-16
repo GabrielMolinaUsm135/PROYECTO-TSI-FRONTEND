@@ -1,9 +1,16 @@
+<<<<<<< HEAD
 import { Link } from "react-router-dom";
 
 export default function FichaAlumno() {
     return (
         <>
             <div className="container"><Link to="/">main menu</Link></div>
+=======
+export default function FichaAlumno() {
+    return (
+        <>
+            <div className="container"><a href="index.html">main menu</a></div>
+>>>>>>> origin/main
             <div className="container">
                 <div className="row h-100 align-items-stretch">
                     {/* Column 1 */}
@@ -42,7 +49,11 @@ export default function FichaAlumno() {
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Instrumento:</h5>
+<<<<<<< HEAD
                                 <Link to="/DetalleInstrumento">Violin</Link>
+=======
+                                <a href="detalleInstrumento.html">Violin</a>
+>>>>>>> origin/main
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Grupo Teoría:</h5>
@@ -128,13 +139,21 @@ export default function FichaAlumno() {
                     </thead>
                     <tbody>
                         <tr>
+<<<<<<< HEAD
                             <td><Link to="/DetalleInstrumento">Violin</Link></td>
+=======
+                            <td><a href="detalleInstrumento.html">Violin</a></td>
+>>>>>>> origin/main
                             <td>01-03-2025</td>
                             <td>15-05-2025</td>
                             <td>En uso</td>
                         </tr>
                         <tr>
+<<<<<<< HEAD
                             <td><Link to="/DetalleInsumo">Pecastilla</Link></td>
+=======
+                            <td><a href="detalleInsumos.html">Pecastilla</a></td>
+>>>>>>> origin/main
                             <td>05-03-2025</td>
                             <td>20-03-2025</td>
                             <td>Atrasado</td>
