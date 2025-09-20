@@ -2,18 +2,14 @@ import { createBrowserRouter } from "react-router-dom";
 import Layout from "./layouts/Layout";
 import Home from "./views/Home";
 import FichaAlumno from "./views/FichaAlumno";
-import CalendarioMensual from "./views/CalendarioMensual";
 import CalendarioSemanal from "./views/CalendarioSemanal";
 import DetalleInstrumento from "./views/DetalleInstrumento";
 import DetalleInsumo from "./views/DetalleInsumo";
-import ListaAlumnos from "./views/ListaAlumnos";
+import ListaAlumnos, {loader as ListaAlumnosLoader}from "./views/ListaAlumnos";
 import ListaInsumos from "./views/ListaInsumos";
 import Login from "./views/Login";
-<<<<<<< HEAD
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-=======
->>>>>>> origin/main
 
 export const router = createBrowserRouter([
     {
@@ -28,22 +24,16 @@ export const router = createBrowserRouter([
                 path: 'FichaAlumno',
                 element: <FichaAlumno/>,
             },
-<<<<<<< HEAD
             /*
-=======
->>>>>>> origin/main
             {
                 path: 'CalendarioMensual',
                 element: <CalendarioMensual/>,
             },
-<<<<<<< HEAD
             */
             {
                 path: 'CalendarioMensual',
                 element: <Calendar/>,
             },
-=======
->>>>>>> origin/main
             {
                 path: 'CalendarioSemanal',
                 element: <CalendarioSemanal/>,
@@ -59,6 +49,7 @@ export const router = createBrowserRouter([
             {
                 path: 'ListaAlumnos',
                 element: <ListaAlumnos/>,
+                loader: ListaAlumnosLoader
             },
             {
                 path: 'ListaInsumos',

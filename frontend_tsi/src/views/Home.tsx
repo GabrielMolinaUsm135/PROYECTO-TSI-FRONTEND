@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Link } from "react-router-dom";
 
 export default function Home() {
@@ -19,8 +18,4 @@ export default function Home() {
             </div>
         </>
     )
-=======
-export default function Home(){
-    return <h4>PORTADA</h4>
->>>>>>> origin/main
 }

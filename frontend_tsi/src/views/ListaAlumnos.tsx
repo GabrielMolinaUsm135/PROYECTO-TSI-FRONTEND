@@ -1,4 +1,15 @@
+import { useLoaderData } from "react-router-dom"
+import { getListaAlumnos } from "../services/AlumnoService"
+import type { ListaAlumnoSchema } from "../types/alumno"
+
+export async function loader() {
+    const alumnos = await getListaAlumnos()
+    return alumnos
+}
+
 export default function ListaAlumnos() {
+    const alumnos = useLoaderData() as ListaAlumnoSchema[]
+    console.log(alumnos)
   return(
     <>
         <div className="row bg-primary text-white py-3 mb-5">
@@ -13,13 +24,17 @@ export default function ListaAlumnos() {
                         <tr>
                             <th>Rut</th>
                             <th>Nombre</th>
+                            <th>Apellido Paterno</th>
+                            <th>Apellido Materno</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>12345678-9</td>
-                            <td>Juan Pérez</td>
+                            <td>Juan</td>
+                            <td></td>
+                            <td></td>
                             <td>
                                 <div className="d-flex gap-2">
                                     <a href="#" className="btn btn-primary btn-sm">Editar</a>
