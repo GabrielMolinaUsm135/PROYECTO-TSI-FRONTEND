@@ -1,15 +1,16 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "./layouts/Layout";
 import Home from "./views/Home";
-import FichaAlumno from "./views/FichaAlumno";
-import CalendarioSemanal from "./views/CalendarioSemanal";
-import DetalleInstrumento from "./views/DetalleInstrumento";
-import DetalleInsumo from "./views/DetalleInsumo";
-import ListaAlumnos, {loader as ListaAlumnosLoader}from "./views/ListaAlumnos";
-import ListaInsumos from "./views/ListaInsumos";
+import FichaAlumno from "./views/Alumno/FichaAlumno";
+import CalendarioSemanal from "./views/Calendario/CalendarioSemanal";
+import DetalleInstrumento from "./views/instrumentos&Inusmos/DetalleInstrumento";
+import DetalleInsumo from "./views/instrumentos&Inusmos/DetalleInsumo";
+import ListaAlumnos, {loader as ListaAlumnosLoader}from "./views/Alumno/ListaAlumnos";
+import ListaInsumos from "./views/instrumentos&Inusmos/ListaInsumos";
 import Login from "./views/Login";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import CrearAlumno from "./views/Alumno/CrearAlumno";
 
 export const router = createBrowserRouter([
     {
@@ -49,7 +50,11 @@ export const router = createBrowserRouter([
             {
                 path: 'ListaAlumnos',
                 element: <ListaAlumnos/>,
-                // loader: ListaAlumnosLoader  
+                // loader: ListaAlumnosLoader
+            },
+            {
+                path: 'Alumno/CrearAlumno',
+                element: <CrearAlumno/>
             },
             {
                 path: 'ListaInsumos',
