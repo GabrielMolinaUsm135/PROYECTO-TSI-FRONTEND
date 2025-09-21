@@ -15,7 +15,7 @@ export default function ListaAlumnoFila({alumno, openModal}: ListaAlumnoFilaProp
             <td>
                 <div className="d-flex gap-2">
                     <a href={`/Alumno/Ficha/${alumno.rut_alumno}`} className="btn btn-secondary btn-sm">Ver</a>
-                    <a href="/Alumno/EditarAlumno" className="btn btn-primary btn-sm">Editar</a>
+                    <a href={`/Alumno/EditarAlumno/${alumno.rut_alumno}`} className="btn btn-primary btn-sm">Editar</a>
                     <button 
                         type="button" 
                         className="btn btn-sm btn-danger" 
