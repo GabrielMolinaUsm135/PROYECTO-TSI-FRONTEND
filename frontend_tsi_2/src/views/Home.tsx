@@ -11,7 +11,7 @@ export default function Home() {
                     <Link to="/CalendarioSemanal" className="btn btn-info mb-3 w-50">Calendario Semanal</Link>
                     <Link to="/DetalleInstrumento" className="btn btn-secondary mb-3 w-50">Detalle Instrumento</Link>
                     <Link to="/DetalleInsumo" className="btn btn-secondary mb-3 w-50">Detalle Insumo</Link> */}
-                    <Link to="/ListaAlumnos" className="btn btn-success mb-3 w-50">Lista Alumnos</Link>
+                    <Link to="Alumno/ListaAlumnos" className="btn btn-success mb-3 w-50">Lista Alumnos</Link>
                     {/* <Link to="/ListaInsumos" className="btn btn-success mb-3 w-50">Lista Insumos/Instrumentos</Link> */}
                     <Link to="/Login" className="btn btn-dark mb-3 w-50">Login</Link>
                 </div>

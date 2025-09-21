@@ -10,4 +10,4 @@ export const ListaAlumnoSchema = object({
 export const ListaAlumnosSchema = array(ListaAlumnoSchema)
 
 //types
-export type ListaAlumnoSchema = InferOutput<typeof ListaAlumnoSchema>
+export type ListaAlumno = InferOutput<typeof ListaAlumnoSchema>
