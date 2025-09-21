@@ -1,0 +1,56 @@
+# Explanation: Bringing `rut` into `FichaAlumno`
+
+## Steps Taken:
+1. **Define the Route with a Dynamic Parameter**:
+   - In `router.tsx`, define a route for `FichaAlumno` with a dynamic `rut` parameter:
+     ```tsx
+     {
+         path: 'Alumno/Ficha/:rut',
+         element: <FichaAlumno />,
+         loader: FichaAlumnoLoader,
+     }
+     ```
+
+2. **Create the `loader` Function**:
+   - The `loader` function fetches the alumno data using the `rut` parameter:
+     ```tsx
+     export async function loader({ params }: LoaderFunctionArgs) {
+         const { rut } = params;
+         if (!rut) {
+             throw new Response("Rut parameter is missing", { status: 400 });
+         }
+
+         try {
+             const url = `http://localhost:3000/api/alumno/${rut}`;
+             const response = await axios.get(url);
+             return response.data; // Return only the `data` property
+         } catch (error) {
+             throw new Response("Alumno not found", { status: 404 });
+         }
+     }
+     ```
+
+3. **Use the `useLoaderData` Hook**:
+   - In `FichaAlumno.tsx`, use the `useLoaderData` hook to access the fetched data:
+     ```tsx
+     const alumno = useLoaderData();
+     ```
+
+4. **Access the `rut` and Other Data**:
+   - Access the `rut` and other fields from the `alumno.data` object:
+     ```tsx
+     <p>{alumno.data.rut_alumno}</p>
+     ```
+
+5. **Render the Data**:
+   - Display the alumno's details in the `FichaAlumno` component.
+
+6. **Handle Errors**:
+   - Added error handling in the `loader` function for missing or invalid `rut`.
+
+---
+
+## Summary:
+- The `rut` is passed as a dynamic parameter in the URL.
+- The `loader` fetches the alumno data using the `rut`.
+- The `FichaAlumno` component uses `useLoaderData` to access and display the data.

@@ -18,7 +18,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function FichaAlumno() {
     const alumno = useLoaderData();
-
     console.log(alumno);
 
     return (

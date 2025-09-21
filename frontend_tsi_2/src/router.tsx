@@ -10,7 +10,7 @@ import ListaInsumos from "./views/instrumentos&Inusmos/ListaInsumos";
 import Login from "./views/Login";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import CrearAlumno from "./views/Alumno/CrearAlumno";
+import CrearAlumno, {action as actionCrearAlumno} from "./views/Alumno/CrearAlumno";
 import EditarAlumno from "./views/Alumno/EditarAlumno";
 
 export const router = createBrowserRouter([
@@ -60,7 +60,8 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'Alumno/CrearAlumno',
-                element: <CrearAlumno />
+                element: <CrearAlumno />,
+                action: actionCrearAlumno
             },
             {
                 path: 'ListaInsumos',

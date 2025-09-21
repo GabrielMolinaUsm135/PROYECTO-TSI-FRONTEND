@@ -1,4 +1,19 @@
 import { useState } from "react";
+import { Form, redirect, type ActionFunctionArgs } from "react-router-dom";
+import { alumnoCrear } from "../../services/AlumnoService";
+
+export async function action({ request }: ActionFunctionArgs) {
+    const FormData = Object.fromEntries(await request.formData());
+    const resultado = await alumnoCrear(FormData);
+
+    if (resultado?.success) {
+        // Redirect immediately after a successful post
+        return redirect('/Alumno/ListaAlumnos');
+    }
+
+    // Handle failure (optional)
+    return new Response("Failed to create alumno", { status: 500 });
+}
 
 export default function CrearAlumno() {
     const [rutApoderados] = useState([
@@ -15,10 +30,10 @@ export default function CrearAlumno() {
                 </div>
             </div>
             <div className="container mb-5">
-                <form className="row">
+                <Form method="POST" className="row">
                     <div className="col-md-6">
                         <div className="mb-3 bg-light p-3 rounded">
-                            <label htmlFor="rut_alumno" className="form-label">RUT Alumno:</label>
+                            <label htmlFor="rut_alumno" className="form-label">RUT Alumno: XX.XXX.XXX-X</label>
                             <input type="text" id="rut_alumno" name="rut_alumno" maxLength={12} required className="form-control" />
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
@@ -44,7 +59,14 @@ export default function CrearAlumno() {
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="telefono_alumno" className="form-label">Teléfono Alumno:</label>
-                            <input type="number" id="telefono_alumno" name="telefono_alumno" required className="form-control" />
+                            <input
+                                type="text" // Changed from "number" to "text"
+                                id="telefono_alumno"
+                                name="telefono_alumno"
+                                maxLength={15} // Optional: Limit the length for phone numbers
+                                required
+                                className="form-control"
+                            />
                         </div>
                     </div>
                     <div className="col-md-6">
@@ -62,13 +84,13 @@ export default function CrearAlumno() {
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="diagnostico_ne" className="form-label">Diagnóstico NE:</label>
-                            <textarea id="diagnostico_ne" name="diagnostico_ne" maxLength={100} required className="form-control" style={{ height: "275px" }}></textarea>
+                            <textarea id="diagnostico_ne" name="diagnostico_ne" maxLength={100} className="form-control" style={{ height: "275px" }}></textarea>
                         </div>
                     </div>
                     <div className="col-12 text-center">
                         <button type="submit" className="btn btn-primary">Confirmar</button>
                     </div>
-                </form>
+                </Form>
             </div>
         </>
     )
