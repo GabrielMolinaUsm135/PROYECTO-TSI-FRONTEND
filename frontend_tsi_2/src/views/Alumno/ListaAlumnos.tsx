@@ -33,6 +33,12 @@ export default function ListaAlumnos() {
     };
 
     const alumnos = useLoaderData() as ListaAlumno[];
+    console.log('👥 Datos de alumnos recibidos en componente:', alumnos);
+    
+    // Validación defensiva para asegurar que alumnos sea un array
+    const alumnosValidos = Array.isArray(alumnos) ? alumnos : [];
+    console.log('✅ Alumnos válidos para mostrar:', alumnosValidos, 'Cantidad:', alumnosValidos.length);
+    
     return (
         <>
             <div className="row bg-primary text-white py-3 mb-5">
@@ -53,7 +59,7 @@ export default function ListaAlumnos() {
                             </tr>
                         </thead>
                         <tbody>
-                            {alumnos.map((alumno) => (
+                            {alumnosValidos.map((alumno) => (
                                 <ListaAlumnoFila
                                     key={alumno.rut_alumno}
                                     alumno={alumno}

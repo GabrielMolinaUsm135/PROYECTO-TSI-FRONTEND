@@ -13,7 +13,8 @@ export async function getListaAlumnos() {
             throw new Error('Error en la validacion de datos');
         }
     } catch (error) {
-        console.log(error);
+        console.error('Error al obtener lista de alumnos:', error);
+        return []; // Devolver array vacío en caso de error
     }
 }
 

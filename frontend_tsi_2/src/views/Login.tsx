@@ -1,4 +1,21 @@
+import { Form , redirect, useActionData} from "react-router-dom";
+import { login } from "../services/UsuarioService";
+
+export async function action({ request }: { request: Request }) {
+    const formData = Object.fromEntries(await request.formData());
+    const resultado = await login(formData)
+    if (!resultado.success){
+        return resultado
+    }
+    return redirect('/')
+}
+
 export default function Login() {
+    const actionData = useActionData() as {
+        success: boolean;
+        error?: string;
+        detalleErrores?: {[key:string]:string[]}
+    }
     return (
         <>
             <div className="container-fluid">
@@ -7,18 +24,28 @@ export default function Login() {
                         <div className="card mb-3">
                             <div className="card-body">
                                 <h3 className="card-title text-center mb-4">Iniciar Sesión</h3>
-                                <form>
+                                {actionData?.error && (
+                                    <div className="alert alert-danger">
+                                        {actionData.error}
+                                        </div>
+                                        )}
+                                <Form method="POST">
                                     <div className="mb-3">
-                                        <label htmlFor="email" className="form-label">
-                                            Email
+                                        <label htmlFor="string" className="form-label">
+                                            Username
                                         </label>
                                         <input
                                             type="text"
-                                            className="form-control"
-                                            id="email"
-                                            name="email"
-                                            placeholder="Ingrese su email"
+                                            className={`form-control ${actionData?.detalleErrores?.username ? 'is-invalid' :''}`}
+                                            id="username"
+                                            name="username"
+                                            placeholder="Ingrese su nombre de usuario"
                                         />
+                                        {'username' in (actionData?.detalleErrores || {}) && (
+                                            <div className="invalid-feedback">
+                                                {actionData?.detalleErrores?.username[0]}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="mb-3">
                                         <label htmlFor="password" className="form-label">
@@ -26,16 +53,21 @@ export default function Login() {
                                         </label>
                                         <input
                                             type="password"
-                                            className="form-control"
+                                            className={`form-control ${actionData?.detalleErrores?.password ? 'is-invalid' :''}`}
                                             id="password"
                                             name="password"
                                             placeholder="Ingrese su contraseña"
                                         />
+                                        {'password' in (actionData?.detalleErrores || {}) && (
+                                            <div className="invalid-feedback">
+                                                {actionData?.detalleErrores?.password[0]}
+                                            </div>
+                                        )}
                                     </div>
                                     <button type="submit" className="btn btn-primary w-100">
                                         Entrar
                                     </button>
-                                </form>
+                                </Form>
                                 <div className="mt-3 text-center">
                                     <a href="/crearCuenta">Crear cuenta</a>
                                 </div>

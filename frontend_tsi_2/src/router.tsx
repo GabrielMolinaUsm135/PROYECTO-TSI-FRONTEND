@@ -1,25 +1,35 @@
 import { createBrowserRouter } from "react-router-dom";
-import Layout from "./layouts/Layout";
 import FichaAlumno, { loader as FichaAlumnoLoader } from "./views/Alumno/FichaAlumno";
 import CalendarioSemanal from "./views/Calendario/CalendarioSemanal";
 import DetalleInstrumento from "./views/instrumentos&Inusmos/DetalleInstrumento";
 import DetalleInsumo from "./views/instrumentos&Inusmos/DetalleInsumo";
 import ListaAlumnos, { loader as ListaAlumnosLoader } from "./views/Alumno/ListaAlumnos";
 import ListaInsumos from "./views/instrumentos&Inusmos/ListaInsumos";
-import Login from "./views/Login";
+import Login, {action as loginAction} from "./views/Login";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import CrearAlumno, {action as actionCrearAlumno} from "./views/Alumno/CrearAlumno";
 import EditarAlumno, {loader as EditarAlumnoLoader, action as EditarAlumnoAction} from "./views/Alumno/EditarAlumno";
+import { PrivateRoute } from "./components/Privateroute";
+import Layout from "./layouts/Layout";
+import Home from "./views/Home";
 
 export const router = createBrowserRouter([
+    {
+        path: '/login',
+        element: <Login/>,
+        action: loginAction,
+    },
     {
         path: "/",
         element: <Layout />,
         children: [
             {
+                element: <PrivateRoute/>,
+                children: [
+                    {
                 index: true,
-                element: <Login />,
+                element: <Home />,
             },
             {
                 path: 'Alumno/Ficha/:rut',
@@ -67,7 +77,8 @@ export const router = createBrowserRouter([
             {
                 path: 'ListaInsumos',
                 element: <ListaInsumos />,
-            },
+            },]
+            }
         ]
     }
 ])
