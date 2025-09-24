@@ -24,20 +24,26 @@ export default function ListaInsumos(){
                                 <tr>
                                     <td>VLN001</td>
                                     <td>Violin</td>
-                                    <td><a href="detalleInstrumento.html" className="btn btn-primary btn">...</a></td>
+                                    <td><a href="/DetalleInstrumento" className="btn btn-primary btn">...</a></td>
                                     <td>✔️</td>
                                     <td>...</td>
                                     <td>...</td>
-                                    <td><a href="#" className="btn btn-warning btn">✏️</a></td>
+                                    <td>
+                                        <a href="#" className="btn btn-warning btn">✏️</a>
+                                        <a href="#" className="btn btn-success btn">📥</a>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>PCT001</td>
                                     <td>Pecastilla</td>
-                                    <td><a href="detalleInsumos.html" className="btn btn-primary btn">...</a></td>
+                                    <td><a href='/DetalleInsumo' className="btn btn-primary btn">...</a></td>
                                     <td>❌</td>
                                     <td>01/01/2025</td>
                                     <td>30/04/2025</td>
-                                    <td><a href="#" className="btn btn-warning btn">✏️</a></td>
+                                    <td>
+                                        <a href="#" className="btn btn-warning btn">✏️</a>
+                                        <a href="#" className="btn btn-success btn">📥</a>
+                                    </td>
                                 </tr>
                                 {/* <!-- Add more rows as needed --> */}
                             </tbody>

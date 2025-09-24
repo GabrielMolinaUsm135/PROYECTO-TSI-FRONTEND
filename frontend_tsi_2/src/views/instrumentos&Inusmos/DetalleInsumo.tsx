@@ -1,8 +1,6 @@
 export default function DetalleInsumo(){
     return(
         <>
-            <div className="container"><a href="index.html">main menu</a></div>
-
             <div className="container-fluid">
                 <div className="row">
                     {/* <!-- Left side --> */}
