@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "./layouts/Layout";
-import Home from "./views/Home";
 import FichaAlumno, { loader as FichaAlumnoLoader } from "./views/Alumno/FichaAlumno";
 import CalendarioSemanal from "./views/Calendario/CalendarioSemanal";
 import DetalleInstrumento from "./views/instrumentos&Inusmos/DetalleInstrumento";
@@ -20,7 +19,7 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Home />,
+                element: <Login />,
             },
             {
                 path: 'Alumno/Ficha/:rut',
@@ -69,11 +68,6 @@ export const router = createBrowserRouter([
                 path: 'ListaInsumos',
                 element: <ListaInsumos />,
             },
-            {
-                path: 'Login',
-                element: <Login />,
-            },
-
         ]
     }
 ])

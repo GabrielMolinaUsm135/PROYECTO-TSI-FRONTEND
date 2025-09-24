@@ -24,7 +24,7 @@ export default function FichaAlumno() {
         <>
             <div className="row bg-primary text-white py-3 mb-5">
                 <div className="col text-center">
-                    <h1>Ficha {alumno.data.nombre_alumno} {alumno.data.apellido_paterno} {alumno.data.apellido_materno}</h1>
+                    <h1>Ficha "{alumno.data.nombre_alumno} {alumno.data.apellido_paterno} {alumno.data.apellido_materno}"</h1>
                 </div>
             </div>
             <div className="container mt-5 mb-5">

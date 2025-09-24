@@ -46,3 +46,13 @@ export async function alumnoCrear(formData: AlumnoFormData) {
         console.log(error);
     }
 }
+
+export async function alumnoEliminar(rut: string) {
+    try {
+        const url = `http://localhost:3000/api/alumno/${rut}`;
+        await axios.delete(url);
+        return { success: true };
+    } catch (error) {
+        console.log(error);
+    }
+}
