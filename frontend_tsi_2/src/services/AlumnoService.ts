@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../services/axiosinstance";
 import { safeParse } from "valibot";
 import { AlumnoFormSchema, ListaAlumnosSchema } from "../types/alumno";
 
