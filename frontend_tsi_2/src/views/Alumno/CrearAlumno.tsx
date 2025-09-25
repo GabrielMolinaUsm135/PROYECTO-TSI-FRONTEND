@@ -1,21 +1,53 @@
 import { useState } from "react";
-import { Form, redirect, type ActionFunctionArgs } from "react-router-dom";
+import { Form, redirect, useActionData, type ActionFunctionArgs } from "react-router-dom";
 import { alumnoCrear } from "../../services/AlumnoService";
+import axios from "axios";
 
 export async function action({ request }: ActionFunctionArgs) {
     const FormData = Object.fromEntries(await request.formData());
-    const resultado = await alumnoCrear(FormData);
+    const rut = FormData.rut_alumno as string;
 
-    if (resultado?.success) {
-        // Redirect immediately after a successful post
-        return redirect('/Alumno/ListaAlumnos');
+    try {
+        // Check if the RUT already exists in the database using the provided endpoint
+        const checkUrl = `http://localhost:3000/alumno/${rut}`;
+        const checkResponse = await axios.get(checkUrl);
+
+        if (checkResponse.data) {
+            return { error: "El RUT ya está registrado en la base de datos" };
+        }
+
+        // Proceed to create the alumno if the RUT does not exist
+        const resultado = await alumnoCrear(FormData);
+
+        if (resultado?.success) {
+            return redirect('/Alumno/ListaAlumnos');
+        }
+
+        return { error: "rut no valido." };
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+            // If the RUT does not exist (404), proceed to create the alumno
+            try {
+                const resultado = await alumnoCrear(FormData);
+
+                if (resultado?.success) {
+                    return redirect('/Alumno/ListaAlumnos');
+                }
+
+                return { error: "No se pudo crear el alumno. Por favor, intente nuevamente." };
+            } catch (createError) {
+                console.error("Error creating alumno:", createError);
+                return { error: "Ocurrió un error al crear el alumno. Por favor, intente más tarde." };
+            }
+        }
+
+        console.error("Error checking alumno by RUT:", error);
+        return { error: "Ocurrió un error al verificar el RUT. Por favor, intente más tarde." };
     }
-
-    // Handle failure (optional)
-    return new Response("Failed to create alumno", { status: 500 });
 }
 
 export default function CrearAlumno() {
+    const actionData = useActionData() as { error?: string };
     const [rutApoderados] = useState([
         "12345678-9", 
         "98765432-1", 
@@ -32,6 +64,11 @@ export default function CrearAlumno() {
                 </div>
             </div>
             <div className="container mb-5">
+                {actionData?.error && (
+                    <div className="alert alert-danger" role="alert">
+                        {actionData.error}
+                    </div>
+                )}
                 <Form method="POST" className="row">
                     <div className="col-md-6">
                         <div className="mb-3 bg-light p-3 rounded">
@@ -71,11 +108,14 @@ export default function CrearAlumno() {
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="telefono_alumno" className="form-label">Teléfono Alumno: <span className="text-danger">*</span></label>
                             <input
-                                type="text"
+                                type="tel"
                                 id="telefono_alumno"
                                 name="telefono_alumno"
-                                maxLength={15}
+                                maxLength={9}
+                                minLength={9}
                                 required
+                                pattern="\d{9}"
+                                title="El teléfono debe contener exactamente 9 dígitos"
                                 className="form-control"
                             />
                         </div>
