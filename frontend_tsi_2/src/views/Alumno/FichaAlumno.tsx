@@ -1,4 +1,4 @@
-import { useLoaderData, type LoaderFunctionArgs } from "react-router-dom";
+import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router-dom";
 import axios from "axios";
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -16,8 +16,23 @@ export async function loader({ params }: LoaderFunctionArgs) {
     }
 }
 
+type AlumnoData = {
+    data: {
+        rut_alumno: string;
+        rut_apoderado: string;
+        nombre_alumno: string;
+        apellido_paterno: string;
+        apellido_materno: string;
+        telefono_alumno: string;
+        correo_alumno: string;
+        direccion_alumno: string;
+        diagnostico_ne: string;
+        anio_ingreso_orquesta: string;
+    };
+};
+
 export default function FichaAlumno() {
-    const alumno = useLoaderData();
+    const alumno = useLoaderData() as AlumnoData;
     console.log(alumno);
 
     return (
@@ -86,6 +101,57 @@ export default function FichaAlumno() {
                         </div>
                     </div>
                 </div>
+                <div className="container mt-4">
+                <h3 className="text-center mb-3">Desempeño Teoria Musical</h3>
+                <table className="table table-bordered text-center">
+                    <thead className="table-primary">
+                        <tr>
+                            <th>Nota 1</th>
+                            <th>Nota 2</th>
+                            <th>Nota 3</th>
+                            <th>Prueba Final</th>
+                            <th>Asistencia %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>6.5</td>
+                            <td>5.8</td>
+                            <td>6.0</td>
+                            <td>6.2</td>
+                            <td>95%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="container mt-4">
+                <h3 className="text-center mb-3">Préstamos Instrumentos/Insumos</h3>
+                <table className="table table-bordered text-center">
+                    <thead className="table-primary">
+                        <tr>
+                            <th>Item</th>
+                            <th>Fecha de Inicio</th>
+                            <th>Fecha de Devolución</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><Link to="/DetalleInstrumento">Violin</Link></td>
+                            <td>01-03-2025</td>
+                            <td>15-05-2025</td>
+                            <td>En uso</td>
+                        </tr>
+                        <tr>
+                            <td><Link to="/DetalleInsumo">Pecastilla</Link></td>
+                            <td>05-03-2025</td>
+                            <td>20-03-2025</td>
+                            <td>Atrasado</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             </div>
         </>
     );
