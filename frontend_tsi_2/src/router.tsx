@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import FichaAlumno, { loader as FichaAlumnoLoader } from "./views/Alumno/FichaAlumno";
 import CalendarioSemanal from "./views/Calendario/CalendarioSemanal";
 import DetalleInstrumento from "./views/instrumentos&Inusmos/DetalleInstrumento";
@@ -26,12 +26,10 @@ export const router = createBrowserRouter([
         children: [
             {
                 element: <PrivateRoute/>,
-                children: 
-                [
+                children: [
                     {
-                        //rutas
                         index: true,
-                        element: <Home />,
+                        element: <Navigate to="/Alumno/ListaAlumnos" replace />,
                     },
                     {
                         path: 'Alumno/Ficha/:rut',
