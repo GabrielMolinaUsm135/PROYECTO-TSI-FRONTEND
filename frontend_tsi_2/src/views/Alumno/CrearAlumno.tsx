@@ -107,17 +107,20 @@ export default function CrearAlumno() {
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="telefono_alumno" className="form-label">Teléfono Alumno: <span className="text-danger">*</span></label>
-                            <input
-                                type="tel"
-                                id="telefono_alumno"
-                                name="telefono_alumno"
-                                maxLength={9}
-                                minLength={9}
-                                required
-                                pattern="\d{9}"
-                                title="El teléfono debe contener exactamente 9 dígitos"
-                                className="form-control"
-                            />
+                            <div className="input-group">
+                                <span className="input-group-text">+56</span>
+                                <input
+                                    type="tel"
+                                    id="telefono_alumno"
+                                    name="telefono_alumno"
+                                    maxLength={9}
+                                    minLength={9}
+                                    required
+                                    pattern="\d{9}"
+                                    title="El teléfono debe contener exactamente 9 dígitos"
+                                    className="form-control"
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className="col-md-6">
