@@ -82,8 +82,20 @@ export default function EditarAlumno() {
                 <Form method="post" className="row">
                     <div className="col-md-6">
                         <div className="mb-3 bg-light p-3 rounded">
-                            <label htmlFor="rut_alumno" className="form-label">RUT Alumno:</label>
-                            <input type="text" id="rut_alumno" name="rut_alumno" maxLength={12} required className="form-control" defaultValue={alumno.data.rut_alumno} />
+                            <label htmlFor="rut_alumno" className="form-label">RUT Alumno: XX.XXX.XXX-X <span className="text-danger">*</span></label>
+                            <input 
+                                type="text" 
+                                id="rut_alumno" 
+                                name="rut_alumno" 
+                                maxLength={12} 
+                                required 
+                                pattern="\d{2}\.\d{3}\.\d{3}-[\dkK]" 
+                                title="El RUT debe tener el formato XX.XXX.XXX-X" 
+                                className="form-control" 
+                                readOnly 
+                                defaultValue={alumno.data.rut_alumno}
+                                style={{ backgroundColor: "#e9ecef" }}
+                            />
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="rut_apoderado" className="form-label">RUT Apoderado:</label>
