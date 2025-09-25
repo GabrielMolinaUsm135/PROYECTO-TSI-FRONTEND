@@ -7,9 +7,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
         throw new Response("Rut parameter is missing", { status: 400 });
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+        throw new Response("Unauthorized", { status: 401 });
+    }
+
     try {
         const url = `http://localhost:3000/api/alumno/${rut}`;
-        const response = await axios.get(url);
+        const response = await axios.get(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data; // Return only the `data` property
     } catch (error) {
         throw new Response("Alumno not found", { status: 404 });

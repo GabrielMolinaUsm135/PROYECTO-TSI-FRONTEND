@@ -8,9 +8,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
         throw new Response("Rut parameter is missing", { status: 400 });
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+        throw new Response("Unauthorized", { status: 401 });
+    }
+
     try {
         const url = `http://localhost:3000/api/alumno/${rut}`;
-        const response = await axios.get(url);
+        const response = await axios.get(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data; // Return only the `data` property
     } catch (error) {
         throw new Response("Alumno not found", { status: 404 });
@@ -23,12 +32,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
         throw new Response("Rut parameter is missing", { status: 400 });
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+        throw new Response("Unauthorized", { status: 401 });
+    }
+
     const FormData = Object.fromEntries(await request.formData());
     try {
         const url = `http://localhost:3000/api/alumno/${rut}`;
         await axios.put(url, FormData, {
             headers: {
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
             },
         });
         return redirect('/Alumno/ListaAlumnos'); // Redirect after successful update
@@ -39,13 +54,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function EditarAlumno() {
-    const alumno = useLoaderData(); // Fetch data from loader
+    const alumno = useLoaderData() as {
+        data: {
+            rut_alumno: string;
+            rut_apoderado: string;
+            nombre_alumno: string;
+            apellido_paterno: string;
+            apellido_materno: string;
+            telefono_alumno: string;
+            correo_alumno: string;
+            direccion_alumno: string;
+            diagnostico_ne: string;
+            anio_ingreso_orquesta: string;
+        };
+    };
 
-    const [rutApoderados] = useState([
-        "12345678-9",
-        "98765432-1",
-        "11223344-5",
-    ]);
+    const [rutApoderados] = useState(["12345678-9", "98765432-1", "11223344-5"]);
 
     return (
         <>

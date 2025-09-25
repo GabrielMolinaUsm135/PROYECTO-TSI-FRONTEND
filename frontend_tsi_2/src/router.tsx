@@ -12,7 +12,6 @@ import CrearAlumno, {action as actionCrearAlumno} from "./views/Alumno/CrearAlum
 import EditarAlumno, {loader as EditarAlumnoLoader, action as EditarAlumnoAction} from "./views/Alumno/EditarAlumno";
 import { PrivateRoute } from "./components/Privateroute";
 import Layout from "./layouts/Layout";
-import Home from "./views/Home";
 
 export const router = createBrowserRouter([
     {
