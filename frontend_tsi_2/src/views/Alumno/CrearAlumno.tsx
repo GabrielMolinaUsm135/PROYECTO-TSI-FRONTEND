@@ -34,7 +34,7 @@ export async function action({ request }: ActionFunctionArgs) {
                     return redirect('/Alumno/ListaAlumnos');
                 }
 
-                return { error: "No se pudo crear el alumno. Por favor, intente nuevamente." };
+                return { error: "Rut no valido, ya existe este alumno." };
             } catch (createError) {
                 console.error("Error creating alumno:", createError);
                 return { error: "Ocurrió un error al crear el alumno. Por favor, intente más tarde." };
