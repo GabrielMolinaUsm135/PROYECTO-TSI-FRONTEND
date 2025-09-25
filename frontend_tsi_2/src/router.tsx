@@ -26,58 +26,61 @@ export const router = createBrowserRouter([
         children: [
             {
                 element: <PrivateRoute/>,
-                children: [
+                children: 
+                [
                     {
-                index: true,
-                element: <Home />,
-            },
-            {
-                path: 'Alumno/Ficha/:rut',
-                element: <FichaAlumno />,
-                loader: FichaAlumnoLoader,
-            },
-            /*
-            {
-                path: 'CalendarioMensual',
-                element: <CalendarioMensual/>,
-            },
-            */
-            {
-                path: 'CalendarioMensual',
-                element: <Calendar />,
-            },
-            {
-                path: 'CalendarioSemanal',
-                element: <CalendarioSemanal />,
-            },
-            {
-                path: 'DetalleInstrumento',
-                element: <DetalleInstrumento />,
-            },
-            {
-                path: 'DetalleInsumo',
-                element: <DetalleInsumo />,
-            },
-            {
-                path: 'Alumno/ListaAlumnos',
-                element: <ListaAlumnos />,
-                loader: ListaAlumnosLoader
-            },
-            {
-                path: 'Alumno/EditarAlumno/:rut',
-                element: <EditarAlumno />,
-                loader: EditarAlumnoLoader,
-                action: EditarAlumnoAction,
-            },
-            {
-                path: 'Alumno/CrearAlumno',
-                element: <CrearAlumno />,
-                action: actionCrearAlumno
-            },
-            {
-                path: 'ListaInsumos',
-                element: <ListaInsumos />,
-            },]
+                        //rutas
+                        index: true,
+                        element: <Home />,
+                    },
+                    {
+                        path: 'Alumno/Ficha/:rut',
+                        element: <FichaAlumno />,
+                        loader: FichaAlumnoLoader,
+                    },
+                    /*
+                    {
+                        path: 'CalendarioMensual',
+                        element: <CalendarioMensual/>,
+                    },
+                    */
+                    {
+                        path: 'CalendarioMensual',
+                        element: <Calendar />,
+                    },
+                    {
+                        path: 'CalendarioSemanal',
+                        element: <CalendarioSemanal />,
+                    },
+                    {
+                        path: 'DetalleInstrumento',
+                        element: <DetalleInstrumento />,
+                    },
+                    {
+                        path: 'DetalleInsumo',
+                        element: <DetalleInsumo />,
+                    },
+                    {
+                        path: 'Alumno/ListaAlumnos',
+                        element: <ListaAlumnos />,
+                        loader: ListaAlumnosLoader
+                    },
+                    {
+                        path: 'Alumno/EditarAlumno/:rut',
+                        element: <EditarAlumno />,
+                        loader: EditarAlumnoLoader,
+                        action: EditarAlumnoAction,
+                    },
+                    {
+                        path: 'Alumno/CrearAlumno',
+                        element: <CrearAlumno />,
+                        action: actionCrearAlumno
+                    },
+                    {
+                        path: 'ListaInsumos',
+                        element: <ListaInsumos />,
+                    },
+                ]
             }
         ]
     }
