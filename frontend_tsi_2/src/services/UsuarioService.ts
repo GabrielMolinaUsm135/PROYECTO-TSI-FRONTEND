@@ -10,14 +10,19 @@ export async function login(formData: UsuarioFormData) {
         console.log('1. Iniciando login con datos:', formData);
         const resultado = safeParse(LoginFormSchema, formData);
         console.log('2. Resultado de validación:', resultado);
+
         
         if (resultado.success){
             //aprueba el schema
             const url = `http://localhost:3000/api/login`;
             console.log('3. URL del backend:', url);
-            console.log('4. Datos a enviar:', resultado.output);
-            
-            const {data} = await axios.post(url,resultado.output);
+           const payload = { ...resultado.output } as Record<string, any>;
+            if (!payload.username && payload.email) {
+                payload.username = String(payload.email);
+            }
+            console.log('4. Datos a enviar (payload):', payload);
+
+            const {data} = await axios.post(url, payload);
             console.log('5. Respuesta del backend:', data);
             
             localStorage.setItem('token', data.token);

@@ -31,19 +31,19 @@ export default function Login() {
                                         )}
                                 <Form method="POST">
                                     <div className="mb-3">
-                                        <label htmlFor="string" className="form-label">
-                                            Username
+                                        <label htmlFor="email" className="form-label">
+                                            Correo Electronico
                                         </label>
                                         <input
                                             type="text"
-                                            className={`form-control ${actionData?.detalleErrores?.username ? 'is-invalid' :''}`}
-                                            id="username"
-                                            name="username"
-                                            placeholder="Ingrese su nombre de usuario"
+                                            className={`form-control ${actionData?.detalleErrores?.email ? 'is-invalid' :''}`}
+                                            id="email"
+                                            name="email"
+                                            placeholder="Ingrese su Correo"
                                         />
-                                        {'username' in (actionData?.detalleErrores || {}) && (
+                                        {'email' in (actionData?.detalleErrores || {}) && (
                                             <div className="invalid-feedback">
-                                                {actionData?.detalleErrores?.username[0]}
+                                                {actionData?.detalleErrores?.email[0]}
                                             </div>
                                         )}
                                     </div>
