@@ -1,12 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import FichaAlumno, { loader as FichaAlumnoLoader } from "./views/Alumno/FichaAlumno";
-import CalendarioSemanal from "./views/Calendario/CalendarioSemanal";
 import DetalleInstrumento from "./views/instrumentos&Inusmos/DetalleInstrumento";
 import DetalleInsumo from "./views/instrumentos&Inusmos/DetalleInsumo";
 import ListaAlumnos, { loader as ListaAlumnosLoader } from "./views/Alumno/ListaAlumnos";
 import ListaInsumos from "./views/instrumentos&Inusmos/ListaInsumos";
 import Login, {action as loginAction} from "./views/Login";
-import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import CrearAlumno, {action as actionCrearAlumno} from "./views/Alumno/CrearAlumno";
 import EditarAlumno, {loader as EditarAlumnoLoader, action as EditarAlumnoAction} from "./views/Alumno/EditarAlumno";
@@ -34,21 +32,7 @@ export const router = createBrowserRouter([
                         path: 'Alumno/Ficha/:rut',
                         element: <FichaAlumno />,
                         loader: FichaAlumnoLoader,
-                    },
-                    /*
-                    {
-                        path: 'CalendarioMensual',
-                        element: <CalendarioMensual/>,
-                    },
-                    */
-                    {
-                        path: 'CalendarioMensual',
-                        element: <Calendar />,
-                    },
-                    {
-                        path: 'CalendarioSemanal',
-                        element: <CalendarioSemanal />,
-                    },
+                    },                
                     {
                         path: 'DetalleInstrumento',
                         element: <DetalleInstrumento />,
