@@ -13,22 +13,30 @@ export async function login(formData: UsuarioFormData) {
 
         
         if (resultado.success){
-            //aprueba el schema
+            // aprueba el schema
             const url = `http://localhost:3000/api/login`;
+            // Build explicit payload to avoid sending unexpected FormData shapes
+            const out = resultado.output as any;
+            const payload: Record<string, any> = {
+                correo: out.correo ?? out.username ?? out.email,
+                password: out.password,
+            };
+
             console.log('3. URL del backend:', url);
-           const payload = { ...resultado.output } as Record<string, any>;
-            if (!payload.username && payload.email) {
-                payload.username = String(payload.email);
-            }
             console.log('4. Datos a enviar (payload):', payload);
 
-            const {data} = await axios.post(url, payload);
-            console.log('5. Respuesta del backend:', data);
-            
-            localStorage.setItem('token', data.token);
-            console.log('6. Token guardado en localStorage');
-            return {success: true};
-        }else{
+            try {
+                const { data } = await axios.post(url, payload, { headers: { 'Content-Type': 'application/json' } });
+                console.log('5. Respuesta del backend:', data);
+                localStorage.setItem('token', data.token);
+                console.log('6. Token guardado en localStorage');
+                return { success: true };
+            } catch (err: any) {
+                console.error('Error al llamar /api/login:', err.response?.status, err.response?.data ?? err.message);
+                // rethrow to be handled by outer catch
+                throw err;
+            }
+        } else {
             //no aprueba el schema
             const detalleerror: Record<string,string[] > = {}
             for (const issue of resultado.issues){
