@@ -5,7 +5,6 @@ import DetalleInsumo from "./views/instrumentos&Inusmos/DetalleInsumo";
 import ListaAlumnos, { loader as ListaAlumnosLoader } from "./views/Alumno/ListaAlumnos";
 import ListaInsumos from "./views/instrumentos&Inusmos/ListaInsumos";
 import Login, {action as loginAction} from "./views/Login";
-import CrearAlumno, {action as actionCrearAlumno} from "./views/Alumno/CrearAlumno";
 import EditarAlumno, {loader as EditarAlumnoLoader, action as EditarAlumnoAction} from "./views/Alumno/EditarAlumno";
 import { PrivateRoute } from "./components/Privateroute";
 import Layout from "./layouts/Layout";
@@ -14,7 +13,7 @@ import Home from "./views/Home";
 //CREAR PERFILES
 import CrearUsuario from "./views/CrearPerfiles/CrearUsuario";
 import CrearProfesor from "./views/CrearPerfiles/CrearProfesor";
-//import CrearAlumno from "./views/CrearPerfiles/CrearAlumno";
+import CrearAlumno from "./views/CrearPerfiles/CrearAlumno";
 
 export const router = createBrowserRouter([
     {
@@ -47,14 +46,10 @@ export const router = createBrowserRouter([
                         element: <CrearProfesor/>
                     },
                     {
-                        //path: 'CrearAlumno',
-                        //element: <CrearAlumno/>,
-                    },
-                    {
-                        path: 'Alumno/Ficha/:rut',
-                        element: <FichaAlumno />,
-                        loader: FichaAlumnoLoader,
-                    },                
+                        path: 'CrearAlumno',
+                        element: <CrearAlumno/>,
+                    },                             
+                    //INSTRUMENTOS E INSUMOS     
                     {
                         path: 'DetalleInstrumento',
                         element: <DetalleInstrumento />,
@@ -63,6 +58,16 @@ export const router = createBrowserRouter([
                         path: 'DetalleInsumo',
                         element: <DetalleInsumo />,
                     },
+                    {
+                        path: 'ListaInsumos',
+                        element: <ListaInsumos />,
+                    },
+                    //ALUMNO
+                    {
+                        path: 'Alumno/Ficha/:rut',
+                        element: <FichaAlumno />,
+                        loader: FichaAlumnoLoader,
+                    },  
                     {
                         path: 'Alumno/ListaAlumnos',
                         element: <ListaAlumnos />,
@@ -73,15 +78,6 @@ export const router = createBrowserRouter([
                         element: <EditarAlumno />,
                         loader: EditarAlumnoLoader,
                         action: EditarAlumnoAction,
-                    },
-                    {
-                        path: 'Alumno/CrearAlumno',
-                        element: <CrearAlumno />,
-                        action: actionCrearAlumno
-                    },
-                    {
-                        path: 'ListaInsumos',
-                        element: <ListaInsumos />,
                     },
                 ]
             }

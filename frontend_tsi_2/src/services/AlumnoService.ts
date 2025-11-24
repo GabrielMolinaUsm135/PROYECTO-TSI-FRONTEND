@@ -1,11 +1,11 @@
-import axios from "../services/axiosinstance";
+import axiosInstance from './axiosinstance';
 import { safeParse } from "valibot";
 import { AlumnoFormSchema, ListaAlumnosSchema } from "../types/alumno";
 
 export async function getListaAlumnos() {
     try {
-        const url = 'http://localhost:3000/api/lista/alumnos';
-        const { data: alumnos } = await axios.get(url);
+    const url = '/lista/alumnos';
+    const { data: alumnos } = await axiosInstance.get(url);
         const resultado = safeParse(ListaAlumnosSchema, alumnos.data);
         if (resultado.success) {
             return resultado.output;
@@ -26,8 +26,8 @@ export async function alumnoCrear(formData: AlumnoFormData) {
     try {
         const resultado = safeParse(AlumnoFormSchema, formData);
         if (resultado.success) {
-            const url = 'http://localhost:3000/api/alumno';
-            await axios.post(url, {
+            const url = '/alumno';
+            await axiosInstance.post(url, {
                 rut_alumno: resultado.output.rut_alumno,
                 rut_apoderado: resultado.output.rut_apoderado,
                 nombre_alumno: resultado.output.nombre_alumno,
@@ -50,10 +50,42 @@ export async function alumnoCrear(formData: AlumnoFormData) {
 
 export async function alumnoEliminar(rut: string) {
     try {
-        const url = `http://localhost:3000/api/alumno/${rut}`;
-        await axios.delete(url);
+    const url = `/alumno/${rut}`;
+    await axiosInstance.delete(url);
         return { success: true };
     } catch (error) {
         console.log(error);
+    }
+}
+
+/**
+ * Create an alumno using a backend-shaped payload.
+ * Expected payload example (from user):
+ * {
+ *  id_apoderado: null,
+ *  id_grupo_teoria: 1,
+ *  fecha_ingreso: "2025-11-24",
+ *  nombre: "Juan",
+ *  apellido_paterno: "Perez",
+ *  apellido_materno: "Gonzalez",
+ *  telefono: "999999999",
+ *  direccion: "Calle Falsa 123",
+ *  diagnostico_ne: "ninguno",
+ *  correo: "juan@example.com",
+ *  password: "Secret123!",
+ *  id_rol: 3
+ * }
+ */
+export async function crearAlumno(payload: Record<string, any>) {
+    try {
+        if (!payload || !payload.correo || !payload.password) {
+            return { success: false, error: 'missing_fields' };
+        }
+        const url = '/alumno';
+        const { data } = await axiosInstance.post(url, payload, { headers: { 'Content-Type': 'application/json' } });
+        return { success: true, data };
+    } catch (error:any) {
+        console.error('Error creating alumno:', error);
+        return { success: false, error: error.response?.data?.error ?? error.message ?? 'unexpected error' };
     }
 }
