@@ -1,5 +1,5 @@
 import { safeParse } from "valibot";
-import { LoginFormSchema } from "../types/usuario";
+import { LoginFormSchema, UsuarioFormSchema } from "../types/usuario";
 import axios from "axios";
 
 type UsuarioFormData = {
@@ -56,5 +56,34 @@ export async function login(formData: UsuarioFormData) {
             success: false,
             error: error.response?.data?.error ?? `Error inesperado: ${error.message}`
         }
+    }
+}
+
+export async function crearUsuario(formData: UsuarioFormData) {
+    try{
+        const resultado = safeParse(UsuarioFormSchema, formData);
+        if (!resultado.success) {
+            // Collect validation issues
+            const detalleerror: Record<string,string[] > = {}
+            for (const issue of resultado.issues){
+                const campo = issue.path![0].key as string;
+                if (!detalleerror[campo]) detalleerror[campo] = [];
+                detalleerror[campo].push(issue.message);
+            }
+            return { success: false, error: 'validation', detalle: detalleerror };
+        }
+
+        const url = `http://localhost:3000/api/user/crear`;
+        const payload = {
+            correo: resultado.output.correo,
+            password: resultado.output.password,
+            id_rol: resultado.output.id_rol,
+        };
+
+        const { data } = await axios.post(url, payload, { headers: { 'Content-Type': 'application/json' } });
+        return { success: true, data };
+    }catch (error:any){
+        console.error('Error in crearUsuario:', error);
+        return { success: false, error: error.response?.data?.error ?? error.message ?? 'unexpected error' };
     }
 }

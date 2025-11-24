@@ -68,9 +68,6 @@ export default function Login() {
                                         Entrar
                                     </button>
                                 </Form>
-                                <div className="mt-3 text-center">
-                                    <a href="/crearCuenta">Crear cuenta</a>
-                                </div>
                             </div>
                         </div>
                     </div>

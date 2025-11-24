@@ -1,21 +1,26 @@
-import { Link } from "react-router-dom";
-
 export default function Home() {
     return (
-        <>
-            <div className="container text-center mt-5">
-                <h1>Menú Principal</h1>
-                <div className="d-flex flex-column align-items-center mt-4">
-                     <Link to="/FichaAlumno" className="btn btn-primary mb-3 w-50">Ficha Alumno</Link>
-                    <Link to="/CalendarioMensual" className="btn btn-info mb-3 w-50">Calendario Mensual</Link>
-                    <Link to="/CalendarioSemanal" className="btn btn-info mb-3 w-50">Calendario Semanal</Link>
-                    <Link to="/DetalleInstrumento" className="btn btn-secondary mb-3 w-50">Detalle Instrumento</Link>
-                    <Link to="/DetalleInsumo" className="btn btn-secondary mb-3 w-50">Detalle Insumo</Link>
-                    <Link to="Alumno/ListaAlumnos" className="btn btn-success mb-3 w-50">Lista Alumnos</Link>
-                    <Link to="/ListaInsumos" className="btn btn-success mb-3 w-50">Lista Insumos/Instrumentos</Link>
-                    <Link to="/Login" className="btn btn-dark mb-3 w-50">Login</Link>
+        <div className="container py-5">
+            <div className="row align-items-center gy-4">
+                <div className="col-md-6 text-center">
+                    <div
+                        className="bg-light rounded shadow-sm d-flex align-items-center justify-content-center"
+                        style={{ height: 320 }}
+                    >
+                        {/* Image placeholder - replace the img src with your asset or component */}
+                        <img
+                            src="/placeholder-image.png"
+                            alt="Imagen representativa"
+                            style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                        />
+                    </div>
+                </div>
+
+                <div className="col-md-6">
+                    <h1 className="display-5 fw-bold">SERVICIO PRESTAMOS MUSART</h1>
+                    <p className="lead text-muted">Zona de prestamos de Instrumentos e Insumos</p>
                 </div>
             </div>
-        </>
-    )
+        </div>
+    );
 }

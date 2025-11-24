@@ -19,6 +19,11 @@ export default function NavBar() {
 
                     <div className="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                            
+                            <NavLink to="/Home" className="nav-link text-white">
+                                <i className="bi bi-house"></i>
+                            </NavLink>
+
                             {/* DROPDOWN ALUMNO */}
                             <li className="nav-item dropdown">
                                 <a
@@ -43,33 +48,7 @@ export default function NavBar() {
                                         </NavLink>
                                     </li>
                                 </ul>
-                            </li>
-
-                            {/* DROPDOWN CALENDARIO */}
-                            <li className="nav-item dropdown">
-                                <a
-                                    className="nav-link dropdown-toggle text-white"
-                                    href="#"
-                                    id="calendarioDropdown"
-                                    role="button"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false"
-                                >
-                                    Calendario
-                                </a>
-                                <ul className="dropdown-menu" aria-labelledby="calendarioDropdown">
-                                    <li>
-                                        <NavLink className="dropdown-item" to="/CalendarioMensual">
-                                            Mensual
-                                        </NavLink>
-                                    </li>
-                                    <li>
-                                        <NavLink className="dropdown-item" to="/CalendarioSemanal">
-                                            Semanal
-                                        </NavLink>
-                                    </li>
-                                </ul>
-                            </li>
+                            </li>                    
 
                             {/* DROPDOWN INSTRUMENTOS & INSUMOS */}
                             <li className="nav-item dropdown">
@@ -91,7 +70,36 @@ export default function NavBar() {
                                     </li>
                                 </ul>
                             </li>
+
+                            {/* DROPDOWN CREAR PERFIL */}
+                            <li className="nav-item dropdown">
+                                <a
+                                    className="nav-link dropdown-toggle text-white"
+                                    href="#"
+                                    id="crearPerfilDropdown"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                >
+                                    Crear Perfil
+                                </a>
+                                <ul className="dropdown-menu" aria-labelledby="crearUsuarioDropdown">
+                                    <li>
+                                        <NavLink className="dropdown-item" to="/CrearUsuario">
+                                            Crear Administrador
+                                        </NavLink>
+                                        <NavLink className="dropdown-item" to="/CrearProfesor">
+                                            Crear Profesor
+                                        </NavLink>
+                                        <NavLink className="dropdown-item" to="/CrearAlumno">
+                                            Crear Alumno
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            </li>       
                         </ul>
+
+                                         
 
                         {/* DROPDOWN LOGOUT */}
                         <ul className="navbar-nav ms-auto">
