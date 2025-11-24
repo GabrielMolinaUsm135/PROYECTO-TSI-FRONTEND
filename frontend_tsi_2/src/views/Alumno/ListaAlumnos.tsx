@@ -61,9 +61,9 @@ export default function ListaAlumnos() {
                         <tbody>
                             {alumnosValidos.map((alumno) => (
                                 <ListaAlumnoFila
-                                    key={alumno.rut_alumno}
+                                    key={alumno.rut}
                                     alumno={alumno}
-                                    openModal={() => openModal(alumno.rut_alumno)} // Pass the rut to openModal
+                                    openModal={() => openModal(alumno.rut)} // Pass the rut to openModal
                                 />
                             ))}
                         </tbody>

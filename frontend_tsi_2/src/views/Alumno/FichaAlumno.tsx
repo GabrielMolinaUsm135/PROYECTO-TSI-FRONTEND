@@ -2,9 +2,9 @@ import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router-dom";
 import axios from "axios";
 
 export async function loader({ params }: LoaderFunctionArgs) {
-    const { rut } = params;
-    if (!rut) {
-        throw new Response("Rut parameter is missing", { status: 400 });
+    const idOrRut = params.id;
+    if (!idOrRut) {
+        throw new Response("Alumno identifier is missing", { status: 400 });
     }
 
     const token = localStorage.getItem('token');
@@ -13,13 +13,36 @@ export async function loader({ params }: LoaderFunctionArgs) {
     }
 
     try {
-        const url = `http://localhost:3000/api/alumno/${rut}`;
+        // backend seems to accept the same endpoint for id or rut; try directly
+        const url = `http://localhost:3000/api/alumno/${encodeURIComponent(idOrRut)}`;
         const response = await axios.get(url, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
         });
-        return response.data; // Return only the `data` property
+
+        const alumno = response.data; // expected shape: { data: { ... } }
+
+        // if correo is missing, but there's an associated user id, fetch the user to obtain correo
+        const alumnoData = alumno?.data ?? alumno;
+        if ((alumnoData && !alumnoData.correo) && (alumnoData?.id_usuario || alumnoData?.id_user)) {
+            const userId = alumnoData.id_usuario ?? alumnoData.id_user;
+            try {
+                const userUrl = `http://localhost:3000/api/user/${encodeURIComponent(userId)}`;
+                const userRes = await axios.get(userUrl, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const userData = userRes.data?.data ?? userRes.data;
+                if (userData?.correo) {
+                    // attach correo to the alumno data so the component can display it
+                    if (alumno.data) alumno.data.correo = userData.correo;
+                    else alumno.correo = userData.correo;
+                }
+            } catch (userErr) {
+                // if user lookup fails, continue returning alumno (no correo)
+                console.warn('Could not fetch associated user for correo:', userErr);
+            }
+        }
+
+        return alumno;
     } catch (error) {
         throw new Response("Alumno not found", { status: 404 });
     }
@@ -27,16 +50,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 type AlumnoData = {
     data: {
-        rut_alumno: string;
-        rut_apoderado: string;
-        nombre_alumno: string;
-        apellido_paterno: string;
-        apellido_materno: string;
-        telefono_alumno: string;
-        correo_alumno: string;
-        direccion_alumno: string;
-        diagnostico_ne: string;
-        anio_ingreso_orquesta: string;
+        id_alumno?: number | string;
+        id_usuario?: number | string;
+        rut?: string;
+        rut_apoderado?: string;
+        nombre?: string;
+        apellido_paterno?: string;
+        apellido_materno?: string;
+        telefono?: string;
+        correo?: string;
+        direccion?: string;
+        diagnostico_ne?: string;
+        anio_ingreso_orquesta?: string;
     };
 };
 
@@ -48,7 +73,7 @@ export default function FichaAlumno() {
         <>
             <div className="row bg-primary text-white py-3 mb-5">
                 <div className="col text-center">
-                    <h1>Ficha "{alumno.data.nombre_alumno} {alumno.data.apellido_paterno} {alumno.data.apellido_materno}"</h1>
+                    <h1>Ficha "{alumno.data.nombre} {alumno.data.apellido_paterno} {alumno.data.apellido_materno}"</h1>
                 </div>
             </div>
             <div className="container mt-5 mb-5">
@@ -69,7 +94,7 @@ export default function FichaAlumno() {
                         <div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Rut:</h5>
-                                <p>{alumno.data.rut_alumno}</p>
+                                <p>{alumno.data.rut}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Rut Apoderado:</h5>
@@ -77,7 +102,7 @@ export default function FichaAlumno() {
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Nombre:</h5>
-                                <p>{alumno.data.nombre_alumno}</p>
+                                <p>{alumno.data.nombre}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Apellido Paterno:</h5>
@@ -89,15 +114,15 @@ export default function FichaAlumno() {
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Teléfono:</h5>
-                                <p>{alumno.data.telefono_alumno}</p>
+                                <p>{alumno.data.telefono}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Correo:</h5>
-                                <p>{alumno.data.correo_alumno}</p>
+                                <p>{alumno.data.correo}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Dirección:</h5>
-                                <p>{alumno.data.direccion_alumno}</p>
+                                <p>{alumno.data.direccion}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Diagnóstico NE:</h5>

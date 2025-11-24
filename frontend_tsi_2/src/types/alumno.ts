@@ -1,8 +1,8 @@
 import { array, object, string, type InferOutput } from "valibot";
 
 export const ListaAlumnoSchema = object({
-    rut_alumno: string(),
-    nombre_alumno: string(),
+    rut: string(),
+    nombre: string(),
     apellido_paterno: string(),
     apellido_materno: string()
 })
@@ -17,7 +17,8 @@ export const AlumnoFormSchema = object({
     correo_alumno: string(),
     direccion_alumno: string(),
     diagnostico_ne: string(),
-    anio_ingreso_orquesta: string()
+    anio_ingreso_orquesta: string(),
+    rut: string()
 })
 
 export const ListaAlumnosSchema = array(ListaAlumnoSchema)

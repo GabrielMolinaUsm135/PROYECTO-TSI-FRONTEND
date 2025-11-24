@@ -8,14 +8,15 @@ type ListaAlumnoFilaProps = {
 export default function ListaAlumnoFila({alumno, openModal}: ListaAlumnoFilaProps) {
     return (
         <tr>
-            <td>{alumno.rut_alumno}</td>
-            <td>{alumno.nombre_alumno}</td>
+            <td>{alumno.rut}</td>
+            <td>{alumno.nombre}</td>
             <td>{alumno.apellido_paterno}</td>
             <td>{alumno.apellido_materno}</td>
             <td>
                 <div className="d-flex gap-2">
-                    <a href={`/Alumno/Ficha/${alumno.rut_alumno}`} className="btn btn-secondary btn-sm">Ver</a>
-                    <a href={`/Alumno/EditarAlumno/${alumno.rut_alumno}`} className="btn btn-primary btn-sm">Editar</a>
+                    {/* prefer linking by primary id if available, fall back to rut */}
+                    <a href={`/Alumno/Ficha/${(alumno as any).id_alumno ?? alumno.rut}`} className="btn btn-secondary btn-sm">Ver</a>
+                    <a href={`/Alumno/EditarAlumno/${alumno.rut}`} className="btn btn-primary btn-sm">Editar</a>
                     <button 
                         type="button" 
                         className="btn btn-sm btn-danger" 

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Form } from 'react-router-dom';
 import { crearUsuario } from '../../services/UsuarioService';
 
 export default function CrearUsuario() {
@@ -43,47 +42,45 @@ export default function CrearUsuario() {
     };
 
     return (
-        <>
-            <Form onSubmit={handleSubmit}>
-                <div className="container-fluid mt-4">
-                    <legend className="w-auto">Administrador</legend>
+        <div className="container py-4">
+            <h2 className="mb-4">Crear Usuario</h2>
 
-                    {message && <div className="alert alert-success">{message}</div>}
-                    {error && <div className="alert alert-danger">{error}</div>}
+            {message && <div className="alert alert-success">{message}</div>}
+            {error && <div className="alert alert-danger">{error}</div>}
 
-                    <div className="row">
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Correo</label>
-                            <input
-                                name="correo"
-                                type="email"
-                                className="form-control"
-                                value={correo}
-                                onChange={(e) => setCorreo(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Contraseña</label>
-                            <input
-                                name="password"
-                                type="password"
-                                className="form-control"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
+            <form onSubmit={handleSubmit}>
+                <div className="row">
+                    <div className="col-md-6 mb-3">
+                        <label className="form-label">Correo</label>
+                        <input
+                            name="correo"
+                            type="email"
+                            className="form-control"
+                            value={correo}
+                            onChange={(e) => setCorreo(e.target.value)}
+                            required
+                        />
                     </div>
 
-                    <div className="d-flex justify-content-end">
-                        <button className="btn btn-primary" type="submit" disabled={loading}>
-                            {loading ? 'Creando...' : 'Crear'}
-                        </button>
+                    <div className="col-md-6 mb-3">
+                        <label className="form-label">Contraseña</label>
+                        <input
+                            name="password"
+                            type="password"
+                            className="form-control"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
                     </div>
                 </div>
-            </Form>
-        </>
+
+                <div className="d-flex justify-content-end">
+                    <button className="btn btn-primary" type="submit" disabled={loading}>
+                        {loading ? 'Creando...' : 'Crear'}
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 }

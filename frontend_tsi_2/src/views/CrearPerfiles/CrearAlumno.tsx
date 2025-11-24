@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { crearAlumno } from '../../services/AlumnoService';
+import { crearAlumno, existeRut } from '../../services/AlumnoService';
 
 export default function CrearAlumno() {
     const [form, setForm] = useState({
+        rut: '',
         id_apoderado: '',
         id_grupo_teoria: 1,
         fecha_ingreso: new Date().toISOString().slice(0, 10),
@@ -13,7 +14,7 @@ export default function CrearAlumno() {
         direccion: '',
         diagnostico_ne: '',
         correo: '',
-        password: '',
+        password: '',        
         id_rol: 3,
     });
 
@@ -32,15 +33,25 @@ export default function CrearAlumno() {
         setError(null);
 
         // basic validation
-        if (!form.nombre || !form.correo || !form.password) {
-            setError('Nombre, correo y contraseña son obligatorios.');
+        if (!form.rut || !form.nombre || !form.correo || !form.password) {
+            setError('RUT, nombre, correo y contraseña son obligatorios.');
             return;
         }
 
         setLoading(true);
         try {
+            // check rut uniqueness
+            const check = await existeRut(String(form.rut).trim());
+            if (check.exists) {
+                setError('El RUT ya está registrado. Verifique o use otro RUT.');
+                setLoading(false);
+                return;
+            }
             // prepare payload matching backend shape (convert empty id_apoderado to null, numeric fields)
             const payload: Record<string, any> = {
+                // include both keys to be compatible with different backend expectations
+                rut: form.rut,
+                rut_alumno: form.rut,
                 id_apoderado: form.id_apoderado === '' ? null : Number(form.id_apoderado),
                 id_grupo_teoria: Number(form.id_grupo_teoria),
                 fecha_ingreso: form.fecha_ingreso,
@@ -58,7 +69,7 @@ export default function CrearAlumno() {
             const res = await crearAlumno(payload);
             if (res.success) {
                 setMessage('Alumno creado correctamente.');
-                setForm(prev => ({ ...prev, nombre: '', apellido_paterno: '', apellido_materno: '', telefono: '', direccion: '', diagnostico_ne: '', correo: '', password: '' }));
+                setForm(prev => ({ ...prev, rut: '', nombre: '', apellido_paterno: '', apellido_materno: '', telefono: '', direccion: '', diagnostico_ne: '', correo: '', password: '' }));
             } else {
                 setError(res.error || 'Error al crear alumno');
             }
@@ -95,6 +106,10 @@ export default function CrearAlumno() {
                 </div>
 
                 <div className="row">
+                    <div className="col-md-4 mb-3">
+                        <label className="form-label">RUT</label>
+                        <input name="rut" className="form-control" value={form.rut} onChange={handleChange} placeholder="12.345.678-9" required />
+                    </div>
                     <div className="col-md-4 mb-3">
                         <label className="form-label">Nombre</label>
                         <input name="nombre" className="form-control" value={form.nombre} onChange={handleChange} required />

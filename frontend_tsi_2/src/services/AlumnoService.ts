@@ -5,8 +5,10 @@ import { AlumnoFormSchema, ListaAlumnosSchema } from "../types/alumno";
 export async function getListaAlumnos() {
     try {
     const url = '/lista/alumnos';
-    const { data: alumnos } = await axiosInstance.get(url);
-        const resultado = safeParse(ListaAlumnosSchema, alumnos.data);
+    const { data } = await axiosInstance.get(url);
+    // backend may return { data: [...] } or directly an array — handle both
+    const lista = data?.data ?? data;
+    const resultado = safeParse(ListaAlumnosSchema, lista);
         if (resultado.success) {
             return resultado.output;
         } else {
@@ -48,13 +50,28 @@ export async function alumnoCrear(formData: AlumnoFormData) {
     }
 }
 
-export async function alumnoEliminar(rut: string) {
+export async function alumnoEliminar(id_alumno: string | number, id_usuario?: string | number) {
     try {
-    const url = `/alumno/${rut}`;
-    await axiosInstance.delete(url);
+        // delete alumno by its primary id
+        const alumnoUrl = `/alumno/${id_alumno}`;
+        await axiosInstance.delete(alumnoUrl);
+
+        // if an associated usuario id is provided, delete that user as well
+        if (id_usuario !== undefined && id_usuario !== null) {
+            const userUrl = `/user/${id_usuario}`;
+            try {
+                await axiosInstance.delete(userUrl);
+            } catch (userErr:any) {
+                // Log and continue — return partial failure info
+                console.error('Failed to delete associated user:', userErr);
+                return { success: false, error: 'alumno_deleted_but_user_delete_failed', details: userErr.response?.data ?? String(userErr) };
+            }
+        }
+
         return { success: true };
-    } catch (error) {
+    } catch (error:any) {
         console.log(error);
+        return { success: false, error: error.response?.data?.error ?? error.message ?? 'unexpected error' };
     }
 }
 
@@ -87,5 +104,21 @@ export async function crearAlumno(payload: Record<string, any>) {
     } catch (error:any) {
         console.error('Error creating alumno:', error);
         return { success: false, error: error.response?.data?.error ?? error.message ?? 'unexpected error' };
+    }
+}
+
+export async function existeRut(rut: string) {
+    try {
+        if (!rut) return { exists: false };
+        const url = `/alumno/${encodeURIComponent(rut)}`;
+        const { data } = await axiosInstance.get(url);
+        // if API returns alumno data, consider it exists
+        if (data) return { exists: true, data };
+        return { exists: false };
+    } catch (error: any) {
+        // if 404 then not found, otherwise log and rethrow or return exists=false
+        if (error.response && error.response.status === 404) return { exists: false };
+        console.error('Error checking rut existence:', error);
+        return { exists: false, error: error.response?.data ?? String(error) };
     }
 }
