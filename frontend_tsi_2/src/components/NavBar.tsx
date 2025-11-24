@@ -43,7 +43,7 @@ export default function NavBar() {
                                         </NavLink>
                                     </li>
                                     <li>
-                                        <NavLink className="dropdown-item" to="/Alumno/CrearAlumno">
+                                        <NavLink className="dropdown-item" to="/CrearAlumno">
                                             Crear Alumno
                                         </NavLink>
                                     </li>
