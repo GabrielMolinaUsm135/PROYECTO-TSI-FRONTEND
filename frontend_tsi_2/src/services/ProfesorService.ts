@@ -1,6 +1,7 @@
 import { ListaProfesoresSchema } from '../types/profesor';
 import axiosInstance from './axiosinstance';
 import { safeParse } from 'valibot';
+import { getListaClases } from './ClaseService';
 
 export async function crearProfesor(payload: Record<string, any>) {
   try {
@@ -24,16 +25,33 @@ export async function getListaProfesor() {
     const { data } = await axiosInstance.get(url);
     // backend may return { data: [...] } or directly an array — handle both
     const listaRaw = data?.data ?? data;
+    // obtener clases y construir mapa por id_usuario -> asignatura
+    const clases = await getListaClases();
+    const clasePorUsuario = new Map<number | string, string>();
+    for (const c of clases) {
+      const key = c.id_usuario ?? c.id_profesor ?? null;
+      if (key != null) clasePorUsuario.set(String(key), c.nombre_asignatura ?? '');
+    }
 
-    // normalizar cada objeto a la forma que espera ListaProfesoresSchema
+    // Filtrar por rol == 2 (soporta variantes) y normalizar cada objeto a la forma que espera ListaProfesoresSchema
     const lista = Array.isArray(listaRaw)
-      ? listaRaw.map((item: any) => ({
-          rut: item.rut ?? item.id_rut ?? item.id ?? item.rut_profesor ?? '', 
-          nombre: item.nombre ?? item.firstName ?? item.nombre_completo?.split(' ')?.[0] ?? '',
-          apellido_paterno: item.apellido_paterno ?? item.apellidoPaterno ?? item.lastName ?? '',
-          apellido_materno: item.apellido_materno ?? item.apellidoMaterno ?? '',
-          asignatura: item.asignatura ?? item.subject ?? '',
-        }))
+      ? listaRaw
+          .filter((item: any) => {
+            const posible = item.id_rol ?? item.usuario?.id_rol ?? item.idRol ?? item.role_id ?? item.role;
+            const rol = Number(posible);
+            return rol === 2;
+          })
+          .map((item: any) => {
+            const id_usuario = item.id_usuario ?? item.usuario?.id_usuario ?? item.idUsuario ?? item.usuario?.id ?? item.id_user ?? null;
+            const asignaturaDesdeClase = id_usuario != null ? clasePorUsuario.get(String(id_usuario)) : undefined;
+            return {
+              rut: item.rut ?? item.id_rut ?? item.id ?? item.rut_profesor ?? '',
+              nombre: item.nombre ?? item.nombre_completo?.split(' ')?.[0] ?? '',
+              apellido_paterno: item.apellido_paterno ?? item.apellidoPaterno ?? '',
+              apellido_materno: item.apellido_materno ?? item.apellidoMaterno ?? '',
+              asignatura: asignaturaDesdeClase ?? item.asignatura ?? item.subject ?? '',
+            };
+          })
       : [];
 
     const resultado = safeParse(ListaProfesoresSchema, lista);

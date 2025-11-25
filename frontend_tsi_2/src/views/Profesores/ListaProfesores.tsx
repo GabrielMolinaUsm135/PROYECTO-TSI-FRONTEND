@@ -58,6 +58,7 @@ export default function ListaProfesores() {
                                 <th>Apellido Paterno</th>
                                 <th>Apellido Materno</th>
                                 <th>Asignatura</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -1,6 +1,7 @@
 import {array, number, object, string, type InferOutput } from "valibot";
 
 export const ProfesorFormSchema = object({
+    rut: string(),
     id_profesor: number(),
     id_usuario: number(),
     nombre: string(),

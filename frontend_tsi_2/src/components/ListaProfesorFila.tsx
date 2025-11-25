@@ -12,6 +12,7 @@ export default function ListaProfesorFila({profesor, openModal}: ListaProfesorFi
             <td>{profesor.nombre}</td>
             <td>{profesor.apellido_paterno}</td>
             <td>{profesor.apellido_materno}</td>
+            <td>{(profesor as any).asignatura ?? ''}</td>
             <td>
                 <div className="d-flex gap-2">
                     {/* prefer linking by primary id if available, fall back to rut */}
