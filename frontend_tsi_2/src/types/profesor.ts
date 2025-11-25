@@ -1,4 +1,4 @@
-import {number, object, string } from "valibot";
+import {array, number, object, string, type InferOutput } from "valibot";
 
 export const ProfesorFormSchema = object({
     id_profesor: number(),
@@ -10,3 +10,15 @@ export const ProfesorFormSchema = object({
     direccion: string(),
     asignatura: string(),
 });
+
+export const listaProfesorSchema = object({
+    rut: string(),
+    nombre: string(),
+    apellido_paterno: string(),
+    apellido_materno: string(),
+    asignatura: string(),
+});
+
+export const ListaProfesoresSchema = array(listaProfesorSchema);
+export type ListaProfesor = InferOutput<typeof listaProfesorSchema>;
+
