@@ -9,6 +9,7 @@ export default function CrearProfesor() {
         telefono: '',
         direccion: '',
         asignatura: '',
+        rut: '',
         correo: '',
         password: '',
         id_rol: 2,
@@ -43,6 +44,7 @@ export default function CrearProfesor() {
                 telefono: form.telefono,
                 direccion: form.direccion,
                 asignatura: form.asignatura,
+                rut: form.rut,
                 correo: form.correo,
                 password: form.password,
                 id_rol: 2,
@@ -51,7 +53,7 @@ export default function CrearProfesor() {
             const res = await crearProfesor(payload);
             if (res.success) {
                 setMessage('Profesor creado correctamente.');
-                setForm({ nombre: '', apellido_paterno: '', apellido_materno: '', telefono: '', direccion: '', asignatura: '', correo: '', password: '', id_rol: 2 });
+                setForm({ nombre: '', apellido_paterno: '', apellido_materno: '', telefono: '', direccion: '', asignatura: '', rut: '', correo: '', password: '', id_rol: 2 });
             } else {
                 setError(res.error || 'Error al crear profesor');
             }
@@ -86,6 +88,10 @@ export default function CrearProfesor() {
                 </div>
 
                 <div className="row">
+                    <div className="col-md-6 mb-3">
+                        <label className="form-label">RUT</label>
+                        <input name="rut" className="form-control" value={form.rut} onChange={handleChange} />
+                    </div>
                     <div className="col-md-6 mb-3">
                         <label className="form-label">Teléfono</label>
                         <input name="telefono" className="form-control" value={form.telefono} onChange={handleChange} />
