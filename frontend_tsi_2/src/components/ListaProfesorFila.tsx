@@ -17,7 +17,7 @@ export default function ListaProfesorFila({profesor, openModal}: ListaProfesorFi
                 <div className="d-flex gap-2">
                     {/* prefer linking by primary id if available, fall back to rut */}
                     <a href={`/Profesor/Ficha/${(profesor as any).id_profesor ?? profesor.rut}`} className="btn btn-secondary btn-sm">Ver</a>
-                    <a href={`/Profesor/EditarProfesor/${profesor.rut}`} className="btn btn-primary btn-sm">Editar</a>
+                        <a href={`/Profesor/EditarProfesor/${(profesor as any).id_profesor ?? (profesor as any).id_usuario ?? profesor.rut}`} className="btn btn-primary btn-sm">Editar</a>
                     <button 
                         type="button" 
                         className="btn btn-sm btn-danger" 

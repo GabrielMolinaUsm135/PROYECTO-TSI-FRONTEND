@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import { getListaProfesor, profesorEliminar } from '../../services/ProfesorService';
+import { getListaProfesor, ProfesorEliminar } from '../../services/ProfesorService';
 import { useLoaderData, useNavigate } from 'react-router';
 import type { ListaProfesor } from '../../types/profesor';
 import ListaProfesorFila from '../../components/ListaProfesorFila';
@@ -13,24 +13,70 @@ export async function loader() {
 
 export default function ListaProfesores() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedRut, setSelectedRut] = useState<string | null>(null); // State to store the selected rut
+    const [selectedProfesor, setSelectedProfesor] = useState<ListaProfesor | null>(null); // store selected profesor object
     const navigate = useNavigate(); // React Router's navigation hook
 
-    const openModal = (rut: string) => {
-        setSelectedRut(rut); // Set the selected rut
+    const openModal = (profesor: ListaProfesor) => {
+        setSelectedProfesor(profesor);
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
-        setSelectedRut(null); // Clear the selected rut
+        setSelectedProfesor(null);
     };
 
     const handleDelete = async () => {
-        if (selectedRut) {
-            await profesorEliminar(selectedRut); // Delete the alumno with the selected rut
+        if (!selectedProfesor) return;
+        // prefer deleting by primary id if available
+        const idToDelete = (selectedProfesor as any).id_profesor ?? (selectedProfesor.rut as string);
+        const idUsuario = (selectedProfesor as any).id_usuario ?? undefined;
+        console.debug('Eliminar: selectedProfesor=', selectedProfesor, 'idToDelete=', idToDelete, 'idUsuario=', idUsuario);
+        try {
+            let targetId: string | number = idToDelete;
+
+            // if idToDelete looks like a non-numeric rut, try to resolve real id_profesor from the server
+            if (typeof targetId === 'string' && !/^\d+$/.test(targetId)) {
+                try {
+                    const listaActual = await getListaProfesor();
+                    const encontrado = (listaActual as any[]).find(p => p.rut === targetId || String(p.rut) === String(targetId));
+                    if (encontrado && (encontrado as any).id_profesor) {
+                        console.debug('Resolved id_profesor from rut:', (encontrado as any).id_profesor);
+                        targetId = (encontrado as any).id_profesor;
+                    }
+                } catch (resolveErr) {
+                    console.warn('No se pudo resolver id_profesor desde listaActual', resolveErr);
+                }
+            }
+
+            const result = await ProfesorEliminar(targetId, idUsuario);
+            console.debug('ProfesorEliminar result=', result);
+            if (result && (result as any).success === false) {
+                // fatal error
+                const err = (result as any).error;
+                alert('Error al eliminar profesor: ' + (typeof err === 'object' ? JSON.stringify(err) : String(err)));
+                return;
+            }
+
+            // if professor deleted but user deletion failed, show warning but continue
+            if (result && (result as any).success === true && (result as any).userDeleted === false) {
+                const warning = (result as any).warning ?? 'Profesor eliminado, pero fallo al eliminar usuario asociado.';
+                const details = (result as any).details;
+                let detailsText = '';
+                try {
+                    if (Array.isArray(details)) {
+                        detailsText = details.map((d:any) => `\n- ${d.url} (status: ${d.status ?? 'unknown'}) -> ${d.error}`).join('');
+                    } else if (typeof details === 'string') detailsText = '\n' + details;
+                } catch(e) { detailsText = '' }
+                alert(warning + detailsText);
+            }
+
+            // success (or partial success) — close modal and refresh
             closeModal(); // Close the modal after deletion
-            navigate('/Profesores/ListaProfesores'); // Redirect to the same page to refresh the list
+            navigate('/Profesor/ListaProfesores'); // Redirect to the same page to refresh the list
+        } catch (err:any) {
+            console.error('Error in handleDelete:', err);
+            alert('Error inesperado al eliminar profesor. Revisa la consola.');
         }
     };
 
@@ -66,7 +112,7 @@ export default function ListaProfesores() {
                                 <ListaProfesorFila
                                     key={profesor.rut}
                                     profesor={profesor}
-                                    openModal={() => openModal(profesor.rut)} // Pass the rut to openModal
+                                    openModal={() => openModal(profesor)}
                                 />
                             ))}
                         </tbody>
@@ -98,8 +144,8 @@ export default function ListaProfesores() {
                                 </button>
                             </div>
                             <div className="modal-body">
-                                ¿Está seguro que desea eliminar este Profesor con rut{" "}
-                                {selectedRut}?
+                                    ¿Está seguro que desea eliminar este Profesor con rut{" "}
+                                    {(selectedProfesor as any)?.rut}?
                             </div>
                             <div className="modal-footer">
                                 <button
@@ -113,7 +159,7 @@ export default function ListaProfesores() {
                                     type="button"
                                     className="btn btn-danger"
                                     onClick={handleDelete} // Call handleDelete to delete and redirect
-                                >
+                                > 
                                     Eliminar
                                 </button>
                             </div>
