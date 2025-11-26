@@ -22,6 +22,7 @@ import ListaInstrumentos from "./views/instrumentos&Inusmos/ListaInstrumentos";
 import CrearInstrumento from "./views/instrumentos&Inusmos/CrearInstrumento";
 import ListaPrestamos from "./views/Prestamo/ListaPrestamos";
 import CrearPrestamo from "./views/Prestamo/CrearPrestamo";
+import FichaProfesor, { loader as FichaProfesorLoader } from "./views/Profesores/FichaProfe";
 
 export const router = createBrowserRouter([
     {
@@ -72,6 +73,11 @@ export const router = createBrowserRouter([
                             element: <EditarProfesor />,
                             loader: EditarProfesorLoader,
                             action: EditarProfesorAction,
+                        },
+                        {
+                            path: 'Profesor/Ficha/:id',
+                            element: <FichaProfesor />,
+                            loader: FichaProfesorLoader,
                         },
                     {
                         path: 'Alumno/ListaAlumnos',
