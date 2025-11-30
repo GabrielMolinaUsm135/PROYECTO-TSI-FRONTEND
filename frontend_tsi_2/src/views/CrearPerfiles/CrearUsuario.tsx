@@ -43,7 +43,7 @@ export default function CrearUsuario() {
 
     return (
         <div className="container py-4">
-            <h2 className="mb-4">Crear Usuario</h2>
+            <h2 className="mb-4">Crear Administrador</h2>
 
             {message && <div className="alert alert-success">{message}</div>}
             {error && <div className="alert alert-danger">{error}</div>}
