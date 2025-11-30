@@ -1,9 +1,9 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import FichaAlumno, { loader as FichaAlumnoLoader } from "./views/Alumno/FichaAlumno";
-import DetalleInstrumento from "./views/instrumentos&Inusmos/DetalleInstrumento";
-import DetalleInsumo from "./views/instrumentos&Inusmos/DetalleInsumo";
+import DetalleInstrumento, { loader as DetalleInstrumentoLoader } from "./views/instrumentos&Inusmos/DetalleInstrumento";
+import DetalleInsumo, { loader as DetalleInsumoLoader } from "./views/instrumentos&Inusmos/DetalleInsumo";
 import ListaAlumnos, { loader as ListaAlumnosLoader } from "./views/Alumno/ListaAlumnos";
-import ListaInsumos from "./views/instrumentos&Inusmos/ListaInsumos";
+import ListaInsumos, { loader as ListaInsumosLoader } from "./views/instrumentos&Inusmos/ListaInsumos";
 import CrearInsumo from "./views/instrumentos&Inusmos/CrearInsumo";
 import Login, {action as loginAction} from "./views/Login";
 import EditarAlumno, {loader as EditarAlumnoLoader, action as EditarAlumnoAction} from "./views/Alumno/EditarAlumno";
@@ -18,8 +18,10 @@ import CrearAlumno from "./views/CrearPerfiles/CrearAlumno";
 import ListaProfesores, { loader as ListaProfesoresLoader } from "./views/Profesores/ListaProfesores";
 import EditarProfesor, { loader as EditarProfesorLoader, action as EditarProfesorAction } from "./views/Profesores/EditarProfe";
 import ListaUsuarios from "./views/Admin/ListaUsuarios";
-import ListaInstrumentos from "./views/instrumentos&Inusmos/ListaInstrumentos";
+import ListaInstrumentos, { loader as ListaInstrumentosLoader } from "./views/instrumentos&Inusmos/ListaInstrumentos";
 import CrearInstrumento from "./views/instrumentos&Inusmos/CrearInstrumento";
+import EditarInstrumento, { loader as EditarInstrumentoLoader } from "./views/instrumentos&Inusmos/EditarInstrumento";
+import EditarInsumo, { loader as EditarInsumoLoader } from "./views/instrumentos&Inusmos/EditarInsumo";
 import ListaPrestamos from "./views/Prestamo/ListaPrestamos";
 import CrearPrestamo from "./views/Prestamo/CrearPrestamo";
 import FichaProfesor, { loader as FichaProfesorLoader } from "./views/Profesores/FichaProfe";
@@ -86,20 +88,29 @@ export const router = createBrowserRouter([
                     },
                     //INSTRUMENTOS E INSUMOS     
                     {
-                        path: 'DetalleInstrumento',
+                        path: 'Instrumentos/Detalle/:cod',
                         element: <DetalleInstrumento />,
+                        loader: DetalleInstrumentoLoader,
                     },
                     {
-                        path: 'DetalleInsumo',
+                        path: 'Insumos/Detalle/:cod',
                         element: <DetalleInsumo />,
+                        loader: DetalleInsumoLoader,
                     },
                     {
                         path: 'ListaInsumos',
                         element: <ListaInsumos />,
+                        loader: ListaInsumosLoader,
                     },
                         {
                             path: 'Instrumentos/ListaInstrumentos',
                             element: <ListaInstrumentos />,
+                            loader: ListaInstrumentosLoader,
+                        },
+                        {
+                            path: 'Instrumentos/Editar/:id',
+                            element: <EditarInstrumento />,
+                            loader: EditarInstrumentoLoader,
                         },
                         {
                             path: 'Instrumentos/CrearInstrumento',
@@ -108,6 +119,11 @@ export const router = createBrowserRouter([
                         {
                             path: 'Insumos/CrearInsumo',
                             element: <CrearInsumo />,
+                        },
+                        {
+                            path: 'Insumos/Editar/:id',
+                            element: <EditarInsumo />,
+                            loader: EditarInsumoLoader,
                         },
                         // PRESTAMOS
                         {
