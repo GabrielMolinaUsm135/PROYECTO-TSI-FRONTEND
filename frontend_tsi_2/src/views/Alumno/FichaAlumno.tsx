@@ -113,6 +113,7 @@ export default function FichaAlumno() {
     const notas: any[] = loader?.notas ?? [];
     console.log('alumno loader:', alumno);
     console.log('notas loader:', notas);
+    const alumnoId = alumno?.data?.id_alumno ?? alumno?.data?.id ?? alumno?.id_alumno ?? alumno?.id ?? null;
 
     return (
         <>
@@ -202,6 +203,13 @@ export default function FichaAlumno() {
                         </tr>
                     </tbody>
                 </table>
+                        <div className="d-flex justify-content-center mt-3">
+                            {alumnoId ? (
+                                <Link to={`/alumno/notas/${encodeURIComponent(String(alumnoId))}`} className="btn btn-warning">Editar Notas</Link>
+                            ) : (
+                                <button className="btn btn-warning" disabled>Editar Notas</button>
+                            )}
+                        </div>
             </div>
 
             <div className="container mt-4">
