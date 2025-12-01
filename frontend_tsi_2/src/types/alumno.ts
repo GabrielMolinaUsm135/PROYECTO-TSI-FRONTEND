@@ -14,7 +14,7 @@ export const AlumnoFormSchema = object({
     apellido_paterno: string(),
     apellido_materno: string(),
     telefono_alumno: string(),
-    correo_alumno: string(),
+    correo: string(),
     direccion_alumno: string(),
     diagnostico_ne: string(),
     anio_ingreso_orquesta: string(),

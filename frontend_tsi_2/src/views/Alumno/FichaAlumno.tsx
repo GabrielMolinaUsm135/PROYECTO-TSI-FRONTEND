@@ -58,7 +58,7 @@ type AlumnoData = {
         apellido_paterno?: string;
         apellido_materno?: string;
         telefono?: string;
-        correo?: string;
+        correo: string;
         direccion?: string;
         diagnostico_ne?: string;
         anio_ingreso_orquesta?: string;
