@@ -42,9 +42,40 @@ export async function loader({ params }: LoaderFunctionArgs) {
             }
         }
 
-        return alumno;
+        // attempt to fetch notas for this alumno (Tnotas/:id_alumno)
+        const alumnoDataForNotas = alumno?.data ?? alumno;
+        let notas = [];
+        if (alumnoDataForNotas?.id_alumno) {
+            try {
+                const notasRes = await getNotasAlumno(alumnoDataForNotas.id_alumno);
+                notas = notasRes?.data ?? notasRes ?? [];
+            } catch (notaErr) {
+                console.warn('No se pudieron obtener las notas del alumno:', notaErr);
+                notas = [];
+            }
+        }
+
+        // return combined payload: { alumno: <original>, notas: [...] }
+        return { alumno: alumno, notas };
     } catch (error) {
         throw new Response("Alumno not found", { status: 404 });
+    }
+}
+
+export async function getNotasAlumno(id_alumno: number | string) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        throw new Response("Unauthorized", { status: 401 });
+    }
+    try{   
+        const url = `http://localhost:3000/api/Tnotas/${encodeURIComponent(id_alumno)}`;
+        const notaResponse = await axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        return notaResponse.data;
+     }
+    catch (error) {
+        throw new Response("Notas no encontradas", { status: 404 });
     }
 }
 
@@ -63,11 +94,25 @@ type AlumnoData = {
         diagnostico_ne?: string;
         anio_ingreso_orquesta?: string;
     };
+    
 };
 
+type NotasData = {
+    data: {
+        id_nota?: number | string;
+        id_alumno?: number | string;
+        fecha_evaluacion?: Date;
+        nombre_evaluacion?: string;
+        nota?: number;
+    }
+}
+
 export default function FichaAlumno() {
-    const alumno = useLoaderData() as AlumnoData;
-    console.log(alumno);
+    const loader = useLoaderData() as any;
+    const alumno = loader?.alumno ?? loader;
+    const notas: any[] = loader?.notas ?? [];
+    console.log('alumno loader:', alumno);
+    console.log('notas loader:', notas);
 
     return (
         <>
@@ -137,7 +182,7 @@ export default function FichaAlumno() {
                 </div>
                 <div className="container mt-4">
                 <h3 className="text-center mb-3">Desempeño Teoria Musical</h3>
-                <table className="table table-bordered text-center">
+                        <table className="table table-bordered text-center">
                     <thead className="table-primary">
                         <tr>
                             <th>Nota 1</th>
@@ -149,11 +194,11 @@ export default function FichaAlumno() {
                     </thead>
                     <tbody>
                         <tr>
-                            <td>6.5</td>
-                            <td>5.8</td>
-                            <td>6.0</td>
-                            <td>6.2</td>
-                            <td>95%</td>
+                            <td>{notas[0]?.nota ?? '-'}</td>
+                            <td>{notas[1]?.nota ?? '-'}</td>
+                            <td>{notas[2]?.nota ?? '-'}</td>
+                            <td>{notas[3]?.nota ?? '-'}</td>
+                            <td>{notas[4]?.nota ?? '-'}</td>
                         </tr>
                     </tbody>
                 </table>
