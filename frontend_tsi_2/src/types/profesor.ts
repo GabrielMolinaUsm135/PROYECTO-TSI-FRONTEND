@@ -10,6 +10,7 @@ export const ProfesorFormSchema = object({
     telefono: string(),
     direccion: string(),
     asignatura: string(),
+    correo: string(),
 });
 
 export const listaProfesorSchema = object({

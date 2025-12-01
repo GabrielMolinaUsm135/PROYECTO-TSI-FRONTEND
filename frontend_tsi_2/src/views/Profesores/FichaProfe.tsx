@@ -58,10 +58,8 @@ type ProfesorData = {
         telefono?: string;
         asignatura?: string;
         direccion?: string;
-    };
-    usuario?: {
         correo?: string;
-    }
+    };
 };
 
 
@@ -114,7 +112,7 @@ export default function FichaProfesor() {
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Correo:</h5>
-                                <p>{profesor.usuario?.correo}</p>
+                                <p>{profesor.data.correo}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Dirección:</h5>
