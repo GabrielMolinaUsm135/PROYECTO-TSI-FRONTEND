@@ -39,6 +39,11 @@ export default function ListaInsumos(){
             </div>
 
             <div className="container">
+                <div className="row mb-3">
+                <div className="col text-end">
+                    <Link to="/Insumos/CrearInsumo" className="btn btn-primary">Crear insumo</Link>
+                </div>
+            </div>
                 <div className="row">
                     {insumosValidos.length === 0 ? (
                         <div className="col-12 py-5 text-center text-muted">No hay insumos para mostrar.</div>

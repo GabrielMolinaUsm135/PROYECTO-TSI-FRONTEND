@@ -46,6 +46,11 @@ export default function ListaInstrumentos() {
             </div>
 
             <div className="container">
+                <div className="row mb-3">
+                <div className="col text-end">
+                    <Link to="/Instrumentos/CrearInstrumento" className="btn btn-primary">Crear instrumento</Link>
+                </div>
+            </div>
                 <div className="row">
                     {instrumentosValidos.length === 0 ? (
                         <div className="col-12 py-5 text-center text-muted">No hay instrumentos para mostrar.</div>

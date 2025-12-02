@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { alumnoEliminar, getListaAlumnos } from "../../services/AlumnoService";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { Link, useLoaderData, useNavigate } from "react-router-dom";
 import type { ListaAlumno } from "../../types/alumno";
 import ListaAlumnoFila from "../../components/ListaAlumnoFila";
 
@@ -12,9 +12,6 @@ export async function loader() {
 export default function ListaAlumnos() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRut, setSelectedRut] = useState<string | null>(null); // State to store the selected rut
-    const [nameOrder, setNameOrder] = useState<'none' | 'asc' | 'desc'>('asc');
-    const [apellidoOrder, setApellidoOrder] = useState<'none' | 'asc' | 'desc'>('none');
-    const [letterFilter, setLetterFilter] = useState<string>('');
     const navigate = useNavigate(); // React Router's navigation hook
 
     const openModal = (rut: string) => {
@@ -42,30 +39,6 @@ export default function ListaAlumnos() {
     const alumnosValidos = Array.isArray(alumnos) ? alumnos : [];
     console.log('✅ Alumnos válidos para mostrar:', alumnosValidos, 'Cantidad:', alumnosValidos.length);
     
-    let activeField: 'nombre' | 'apellido_paterno' = 'nombre';
-    let activeOrder: 'asc' | 'desc' = 'asc';
-    if (nameOrder !== 'none') {
-        activeField = 'nombre';
-        activeOrder = nameOrder as 'asc' | 'desc';
-    } else if (apellidoOrder !== 'none') {
-        activeField = 'apellido_paterno';
-        activeOrder = apellidoOrder as 'asc' | 'desc';
-    } else {
-        activeField = 'nombre';
-        activeOrder = 'asc';
-    }
-
-    const filteredAlumnos = letterFilter && letterFilter.length === 1
-        ? alumnosValidos.filter(a => (a.nombre ?? '').toString().toUpperCase().startsWith(letterFilter))
-        : alumnosValidos;
-
-    const sortedAlumnos = [...filteredAlumnos].sort((a, b) => {
-        const aVal = (a[activeField] ?? '').toString();
-        const bVal = (b[activeField] ?? '').toString();
-        const cmp = aVal.localeCompare(bVal, 'es', { sensitivity: 'base' });
-        return activeOrder === 'asc' ? cmp : -cmp;
-    });
-
     return (
         <>
             <div className="row bg-primary text-white py-3 mb-5">
@@ -75,32 +48,8 @@ export default function ListaAlumnos() {
             </div>
             <div className="container">
                 <div className="row mb-3">
-                    <div className="col-md-3">
-                      <label htmlFor="letterFilter" className="form-label">Filtrar por inicial</label>
-                        <select id="letterFilter" className="form-select" value={letterFilter} onChange={e => setLetterFilter(e.target.value)}>
-                            <option value="">Todos</option>
-                            {Array.from({ length: 26 }).map((_, i) => {
-                             const letter = String.fromCharCode(65 + i); // A..Z
-                             return <option key={letter} value={letter}>{letter}</option>;
-                            })}
-                        </select>
-                    </div>
-                    <div className="col-md-3">
-                        
-                        <label htmlFor="nameOrder" className="form-label">Ordenar por nombre</label>
-                        <select id="nameOrder" className="form-select" value={nameOrder} onChange={e => { setNameOrder(e.target.value as 'none' | 'asc' | 'desc'); setApellidoOrder('none'); }}>
-                            <option value="none">--</option>
-                            <option value="asc">A - Z</option>
-                            <option value="desc">Z - A</option>
-                        </select>
-                    </div>
-                    <div className="col-md-3">
-                        <label htmlFor="apellidoOrder" className="form-label">Ordenar por apellido</label>
-                        <select id="apellidoOrder" className="form-select" value={apellidoOrder} onChange={e => { setApellidoOrder(e.target.value as 'none' | 'asc' | 'desc'); setNameOrder('none'); }}>
-                            <option value="none">--</option>
-                            <option value="asc">A - Z</option>
-                            <option value="desc">Z - A</option>
-                        </select>
+                    <div className="col text-end">
+                        <Link to="/CrearAlumno" className="btn btn-primary">Crear Alumno</Link>
                     </div>
                 </div>
                 <div className="row">
@@ -115,7 +64,7 @@ export default function ListaAlumnos() {
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedAlumnos.map((alumno) => (
+                            {alumnosValidos.map((alumno) => (
                                 <ListaAlumnoFila
                                     key={alumno.rut}
                                     alumno={alumno}

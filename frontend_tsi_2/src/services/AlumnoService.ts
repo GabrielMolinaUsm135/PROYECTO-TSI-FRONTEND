@@ -36,7 +36,7 @@ export async function alumnoCrear(formData: AlumnoFormData) {
                 apellido_paterno: resultado.output.apellido_paterno,
                 apellido_materno: resultado.output.apellido_materno,
                 telefono_alumno: resultado.output.telefono_alumno,
-                correo_alumno: resultado.output.correo_alumno,
+                correo_alumno: resultado.output.correo,
                 direccion_alumno: resultado.output.direccion_alumno,
                 diagnostico_ne: resultado.output.diagnostico_ne,
                 anio_ingreso_orquesta: resultado.output.anio_ingreso_orquesta,

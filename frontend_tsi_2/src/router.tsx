@@ -22,6 +22,14 @@ import ListaInstrumentos, { loader as ListaInstrumentosLoader } from "./views/in
 import CrearInstrumento, { action as CrearInstrumentoAction } from "./views/instrumentos&Inusmos/CrearInstrumento";
 import EditarInstrumento, { loader as EditarInstrumentoLoader } from "./views/instrumentos&Inusmos/EditarInstrumento";
 import EditarInsumo, { loader as EditarInsumoLoader } from "./views/instrumentos&Inusmos/EditarInsumo";
+import ListaAlergias, { loader as ListaAlergiasLoader } from "./views/Alergias/ListaAlergias";
+import CrearAlergia from "./views/Alergias/CrearAlergia";
+import DetalleAlergia, { loader as DetalleAlergiaLoader } from "./views/Alergias/DetalleAlergia";
+import EditarAlergia, { loader as EditarAlergiaLoader } from "./views/Alergias/EditarAlergia";
+import ListaApoderados, { loader as ListaApoderadosLoader } from "./views/Apoderados/ListaApoderados";
+import CrearApoderado from "./views/Apoderados/CrearApoderado";
+import DetalleApoderado, { loader as DetalleApoderadoLoader } from "./views/Apoderados/DetalleApoderado";
+import EditarApoderado, { loader as EditarApoderadoLoader } from "./views/Apoderados/EditarApoderado";
 import ListaPrestamos from "./views/Prestamo/ListaPrestamos";
 import CrearPrestamo from "./views/Prestamo/CrearPrestamo";
 import FichaProfesor, { loader as FichaProfesorLoader } from "./views/Profesores/FichaProfe";
@@ -76,6 +84,26 @@ export const router = createBrowserRouter([
                             element: <EditarProfesor />,
                             loader: EditarProfesorLoader,
                             action: EditarProfesorAction,
+                        },
+                        // APODERADOS
+                        {
+                            path: 'Apoderados/ListaApoderados',
+                            element: <ListaApoderados />,
+                            loader: ListaApoderadosLoader,
+                        },
+                        {
+                            path: 'Apoderados/CrearApoderado',
+                            element: <CrearApoderado />,
+                        },
+                        {
+                            path: 'Apoderados/Detalle/:id',
+                            element: <DetalleApoderado />,
+                            loader: DetalleApoderadoLoader,
+                        },
+                        {
+                            path: 'Apoderados/Editar/:id',
+                            element: <EditarApoderado />,
+                            loader: EditarApoderadoLoader,
                         },
                         {
                             path: 'Profesor/Ficha/:id',
@@ -136,6 +164,26 @@ export const router = createBrowserRouter([
                         {
                             path: 'Prestamo/CrearPrestamo',
                             element: <CrearPrestamo />,
+                        },
+                        // ALERGIAS
+                        {
+                            path: 'Alergias/ListaAlergias',
+                            element: <ListaAlergias />,
+                            loader: ListaAlergiasLoader,
+                        },
+                        {
+                            path: 'Alergias/CrearAlergia',
+                            element: <CrearAlergia />,
+                        },
+                        {
+                            path: 'Alergias/Detalle/:id',
+                            element: <DetalleAlergia />,
+                            loader: DetalleAlergiaLoader,
+                        },
+                        {
+                            path: 'Alergias/Editar/:id',
+                            element: <EditarAlergia />,
+                            loader: EditarAlergiaLoader,
                         },
                     //ALUMNO
                     {

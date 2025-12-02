@@ -3,6 +3,7 @@ import { getListaProfesor, ProfesorEliminar } from '../../services/ProfesorServi
 import { useLoaderData, useNavigate } from 'react-router';
 import type { ListaProfesor } from '../../types/profesor';
 import ListaProfesorFila from '../../components/ListaProfesorFila';
+import { Link } from 'react-router-dom';
 
 export async function loader() { 
     const profesores = await getListaProfesor();
@@ -95,6 +96,11 @@ export default function ListaProfesores() {
                 </div>
             </div>
             <div className="container">
+                <div className="row mb-3">
+                                <div className="col text-end">
+                                    <Link to="/CrearProfesor" className="btn btn-primary">Crear profesor</Link>
+                                </div>
+                            </div>
                 <div className="row">
                     <table className="table table-bordered">
                         <thead>
