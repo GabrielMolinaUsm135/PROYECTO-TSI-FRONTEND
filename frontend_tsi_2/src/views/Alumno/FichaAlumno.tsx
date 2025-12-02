@@ -1,5 +1,6 @@
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router-dom";
+import { Link, useLoaderData, type LoaderFunctionArgs, useNavigate } from "react-router-dom";
 import axios from "axios";
+import axiosInstance from "../../services/axiosinstance";
 
 export async function loader({ params }: LoaderFunctionArgs) {
     const idOrRut = params.id;
@@ -111,9 +112,65 @@ export default function FichaAlumno() {
     const loader = useLoaderData() as any;
     const alumno = loader?.alumno ?? loader;
     const notas: any[] = loader?.notas ?? [];
+    const navigate = useNavigate();
     console.log('alumno loader:', alumno);
     console.log('notas loader:', notas);
     const alumnoId = alumno?.data?.id_alumno ?? alumno?.data?.id ?? alumno?.id_alumno ?? alumno?.id ?? null;
+    const canEditNotas = !!alumnoId && Array.isArray(notas) && notas.length >= 4;
+    const canCreateNotas = !!alumnoId && Array.isArray(notas) && notas.length < 4;
+
+    async function createMissingNotas() {
+        if (!alumnoId) return;
+        const missing = 4 - (Array.isArray(notas) ? notas.length : 0);
+        if (missing <= 0) return;
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('No autorizado');
+            return;
+        }
+
+        // attempt to get alumno info (id_alumno/id_usuario)
+        let id_alumno = alumno?.data?.id_alumno ?? alumno?.data?.id ?? alumno?.id_alumno ?? alumno?.id ?? null;
+        let id_usuario = alumno?.data?.id_usuario ?? alumno?.data?.id_user ?? null;
+
+        try {
+            // if id_alumno not present, fetch alumno by route id
+            if (!id_alumno) {
+                const res = await axios.get(`http://localhost:3000/api/alumno/${encodeURIComponent(String(alumnoId))}`, { headers: { Authorization: `Bearer ${token}` } });
+                const a = res.data?.data ?? res.data ?? null;
+                id_alumno = a?.id_alumno ?? a?.id ?? null;
+                id_usuario = id_usuario ?? a?.id_usuario ?? a?.id_user ?? null;
+            }
+
+            if (!id_alumno) {
+                alert('No se pudo obtener id_alumno para crear notas');
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            for (let i = 1; i <= missing; i++) {
+                const payload: Record<string, any> = {
+                    id_alumno,
+                    fecha_evaluacion: today,
+                    nombre_evaluacion: `Evaluación ${ (Array.isArray(notas) ? notas.length : 0) + i }`,
+                    nota: null,
+                };
+                if (id_usuario) payload.id_usuario = id_usuario;
+                try {
+                    await axiosInstance.post('/notas', payload);
+                } catch (err) {
+                    console.warn('Error creando nota por defecto', err);
+                }
+            }
+
+            // refresh the ficha after creation
+            navigate(0);
+        } catch (err) {
+            console.error('Error al crear notas faltantes:', err);
+            alert('Error creando notas. Revisa la consola.');
+        }
+    }
 
     return (
         <>
@@ -204,10 +261,16 @@ export default function FichaAlumno() {
                     </tbody>
                 </table>
                         <div className="d-flex justify-content-center mt-3">
-                            {alumnoId ? (
-                                <Link to={`/alumno/notas/${encodeURIComponent(String(alumnoId))}`} className="btn btn-warning">Editar Notas</Link>
+                            {canEditNotas ? (
+                                <Link to={`/alumno/notas/${encodeURIComponent(String(alumnoId))}`} className="btn btn-warning me-2">Editar Notas</Link>
                             ) : (
-                                <button className="btn btn-warning" disabled>Editar Notas</button>
+                                <button className="btn btn-warning me-2" disabled title="Se requieren 4 notas enlazadas para editar">Editar Notas</button>
+                            )}
+
+                            {canCreateNotas ? (
+                                <button className="btn btn-success" onClick={() => createMissingNotas()}>Crear notas faltantes</button>
+                            ) : (
+                                <button className="btn btn-success" disabled title="No se pueden crear más notas">Crear notas faltantes</button>
                             )}
                         </div>
             </div>
