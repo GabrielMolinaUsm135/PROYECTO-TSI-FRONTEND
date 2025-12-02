@@ -49,3 +49,33 @@ export async function eliminarAlergia(id: string | number) {
     return { success: false, error: err.response?.data ?? err.message ?? 'unexpected error' };
   }
 }
+
+export async function crearAlumnoAlergia(payload: { cod_alergia: number | string; id_alumno: number | string }) {
+  try {
+    const { data } = await axiosInstance.post('/alumno_alergia', payload);
+    return { success: true, data: data?.data ?? data };
+  } catch (err:any) {
+    console.error('Error creating alumno_alergia:', err);
+    return { success: false, error: err.response?.data ?? err.message ?? 'unexpected error' };
+  }
+}
+
+export async function getAlergiasPorAlumno(id_alumno: number | string) {
+  try {
+    const { data } = await axiosInstance.get(`/alumno_alergia/alumno/${encodeURIComponent(String(id_alumno))}`);
+    return data?.data ?? data ?? [];
+  } catch (err:any) {
+    console.error('Error fetching alergias for alumno:', err);
+    return [];
+  }
+}
+
+export async function eliminarAlumnoAlergia(cod_alergia: number | string, id_alumno: number | string) {
+  try {
+    const { data } = await axiosInstance.delete(`/alumno_alergia/${encodeURIComponent(String(cod_alergia))}/${encodeURIComponent(String(id_alumno))}`);
+    return { success: true, data: data?.data ?? data };
+  } catch (err:any) {
+    console.error('Error deleting alumno_alergia relation:', err);
+    return { success: false, error: err.response?.data ?? err.message ?? 'unexpected error' };
+  }
+}

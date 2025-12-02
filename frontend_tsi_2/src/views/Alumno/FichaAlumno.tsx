@@ -1,6 +1,9 @@
 import { Link, useLoaderData, type LoaderFunctionArgs, useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
 import axios from "axios";
 import axiosInstance from "../../services/axiosinstance";
+import { getListaAlergias, crearAlumnoAlergia, getAlergiasPorAlumno, eliminarAlumnoAlergia } from '../../services/AlergiaService';
+import type { Alergia } from '../../types/alergia';
 
 export async function loader({ params }: LoaderFunctionArgs) {
     const idOrRut = params.id;
@@ -80,33 +83,7 @@ export async function getNotasAlumno(id_alumno: number | string) {
     }
 }
 
-type AlumnoData = {
-    data: {
-        id_alumno?: number | string;
-        id_usuario?: number | string;
-        rut?: string;
-        rut_apoderado?: string;
-        nombre?: string;
-        apellido_paterno?: string;
-        apellido_materno?: string;
-        telefono?: string;
-        correo: string;
-        direccion?: string;
-        diagnostico_ne?: string;
-        anio_ingreso_orquesta?: string;
-    };
-    
-};
 
-type NotasData = {
-    data: {
-        id_nota?: number | string;
-        id_alumno?: number | string;
-        fecha_evaluacion?: Date;
-        nombre_evaluacion?: string;
-        nota?: number;
-    }
-}
 
 export default function FichaAlumno() {
     const loader = useLoaderData() as any;
@@ -118,6 +95,84 @@ export default function FichaAlumno() {
     const alumnoId = alumno?.data?.id_alumno ?? alumno?.data?.id ?? alumno?.id_alumno ?? alumno?.id ?? null;
     const canEditNotas = !!alumnoId && Array.isArray(notas) && notas.length >= 4;
     const canCreateNotas = !!alumnoId && Array.isArray(notas) && notas.length < 4;
+
+    // alergias state
+    const [allAlergias, setAllAlergias] = useState<Alergia[]>([]);
+    const [appliedAlergias, setAppliedAlergias] = useState<Alergia[]>([]);
+    const [selectedAlergia, setSelectedAlergia] = useState<string | number>('');
+    const [addingAlergia, setAddingAlergia] = useState(false);
+    const [removingAlergia, setRemovingAlergia] = useState<string | number | null>(null);
+
+    useEffect(() => {
+        let mounted = true;
+        async function load() {
+            try {
+                const list = await getListaAlergias();
+                if (mounted) setAllAlergias(Array.isArray(list) ? list : []);
+            } catch (err) {
+                console.warn('Error loading alergias', err);
+            }
+
+            // fetch applied alergias for this alumno via the dedicated endpoint
+            try {
+                if (alumnoId) {
+                    const applied = await getAlergiasPorAlumno(alumnoId);
+                    if (mounted) setAppliedAlergias(Array.isArray(applied) ? applied : []);
+                }
+            } catch (e) {
+                console.warn('Error loading applied alergias for alumno', e);
+            }
+        }
+        load();
+
+        return () => { mounted = false; };
+    }, [alumno, alumnoId]);
+
+    async function handleAddAlergia() {
+        if (!selectedAlergia || !alumnoId) return;
+        setAddingAlergia(true);
+        try {
+            const res = await crearAlumnoAlergia({ cod_alergia: selectedAlergia, id_alumno: alumnoId });
+            if (!res.success) {
+                alert('Error agregando alergia: ' + (res.error ? JSON.stringify(res.error) : 'unknown'));
+                return;
+            }
+            // refresh applied alergias list from server
+            try {
+                const applied = await getAlergiasPorAlumno(alumnoId);
+                setAppliedAlergias(Array.isArray(applied) ? applied : []);
+            } catch (e) {
+                console.warn('Error refreshing applied alergias after add', e);
+            }
+        } catch (err) {
+            console.error('Error adding alergia', err);
+            alert('Error agregando alergia. Revisa la consola.');
+        } finally {
+            setAddingAlergia(false);
+        }
+    }
+
+    async function handleRemoveAlergia(cod_alergia: string | number) {
+        if (!alumnoId) return;
+        const ok = window.confirm('¿Eliminar esta asociación de alergia para el alumno?');
+        if (!ok) return;
+        setRemovingAlergia(cod_alergia);
+        try {
+            const res = await eliminarAlumnoAlergia(cod_alergia, alumnoId);
+            if (!res.success) {
+                alert('Error eliminando la relación: ' + (res.error ? JSON.stringify(res.error) : 'unknown'));
+                return;
+            }
+            // refresh list
+            const applied = await getAlergiasPorAlumno(alumnoId);
+            setAppliedAlergias(Array.isArray(applied) ? applied : []);
+        } catch (err) {
+            console.error('Error removing alumno_alergia', err);
+            alert('Error eliminando la relación. Revisa la consola.');
+        } finally {
+            setRemovingAlergia(null);
+        }
+    }
 
     async function createMissingNotas() {
         if (!alumnoId) return;
@@ -232,8 +287,8 @@ export default function FichaAlumno() {
                                 <p>{alumno.data.diagnostico_ne}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
-                                <h5 className="me-2">Año de Ingreso a la Orquesta:</h5>
-                                <p>{alumno.data.anio_ingreso_orquesta}</p>
+                                <h5 className="me-2">Fecha de Ingreso a la Orquesta:</h5>
+                                <p>{alumno.data.fecha_ingreso}</p>
                             </div>
                         </div>
                     </div>
@@ -299,6 +354,51 @@ export default function FichaAlumno() {
                             <td>20-03-2025</td>
                             <td>Atrasado</td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="container mt-4">
+                <h3 className="text-center mb-3">Alergias</h3>
+                <div className="d-flex justify-content-center mb-3">
+                    <select className="form-select w-50 me-2" value={selectedAlergia} onChange={(e) => setSelectedAlergia(e.target.value)}>
+                        <option value="">Seleccione una alergia</option>
+                        {allAlergias.map((a) => (
+                            <option key={a.cod_alergia} value={a.cod_alergia}>{a.nombre_alergia ?? a.cod_alergia}</option>
+                        ))}
+                    </select>
+                    <button className="btn btn-primary" onClick={() => handleAddAlergia()} disabled={addingAlergia || !selectedAlergia}>
+                        {addingAlergia ? 'Agregando...' : 'Agregar Alergia'}
+                    </button>
+                </div>
+
+                <table className="table table-bordered text-center">
+                    <thead className="table-primary">
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {appliedAlergias.length === 0 ? (
+                            <tr><td colSpan={3}>No hay alergias registradas</td></tr>
+                        ) : (
+                            appliedAlergias.map((a) => (
+                                <tr key={a.cod_alergia}>
+                                    <td>{a.cod_alergia}</td>
+                                    <td>{a.nombre_alergia}</td>
+                                    <td>
+                                        <button
+                                            className="btn btn-sm btn-danger"
+                                            onClick={() => handleRemoveAlergia(a.cod_alergia)}
+                                            disabled={removingAlergia === a.cod_alergia}
+                                        >
+                                            {removingAlergia === a.cod_alergia ? 'Eliminando...' : 'Eliminar'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

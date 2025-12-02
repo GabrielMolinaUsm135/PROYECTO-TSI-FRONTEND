@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { crearAlumno, existeRut } from '../../services/AlumnoService';
+import axiosInstance from '../../services/axiosinstance';
 
 export default function CrearAlumno() {
     const [form, setForm] = useState({
         rut: '',
-        id_apoderado: '',
+        apoderado_rut: '',
         id_grupo_teoria: 1,
         fecha_ingreso: new Date().toISOString().slice(0, 10),
         nombre: '',
@@ -21,11 +22,34 @@ export default function CrearAlumno() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [apoderados, setApoderados] = useState<string[]>([]);
+    const [apoderadosLoading, setApoderadosLoading] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
     }
+
+    useEffect(() => {
+        // fetch apoderados ruts for the select
+        let mounted = true;
+        async function fetchRuts() {
+            setApoderadosLoading(true);
+            try {
+                const res = await axiosInstance.get('/apoderados/ruts');
+                const data = res.data?.data ?? res.data ?? [];
+                // data may be array of strings or objects { rut }
+                const ruts = (Array.isArray(data) ? data : []).map((it: any) => typeof it === 'string' ? it : it.rut ?? String(it));
+                if (mounted) setApoderados(ruts);
+            } catch (err) {
+                console.warn('No se pudieron obtener los RUTs de apoderados', err);
+            } finally {
+                if (mounted) setApoderadosLoading(false);
+            }
+        }
+        fetchRuts();
+        return () => { mounted = false; };
+    }, []);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -52,7 +76,9 @@ export default function CrearAlumno() {
                 // include both keys to be compatible with different backend expectations
                 rut: form.rut,
                 rut_alumno: form.rut,
-                id_apoderado: form.id_apoderado === '' ? null : Number(form.id_apoderado),
+                // backend may accept rut_apoderado; keep id_apoderado=null to avoid mismatches
+                rut_apoderado: form.apoderado_rut || null,
+                id_apoderado: null,
                 id_grupo_teoria: Number(form.id_grupo_teoria),
                 fecha_ingreso: form.fecha_ingreso,
                 nombre: form.nombre,
@@ -90,8 +116,15 @@ export default function CrearAlumno() {
             <form onSubmit={handleSubmit}>
                 <div className="row">
                     <div className="col-md-4 mb-3">
-                        <label className="form-label">ID Apoderado (opcional)</label>
-                        <input name="id_apoderado" className="form-control" value={form.id_apoderado} onChange={handleChange} />
+                        <label className="form-label">Apoderado (RUT) (opcional)</label>
+                        <select name="apoderado_rut" className="form-select" value={form.apoderado_rut} onChange={handleChange}>
+                            <option value="">-- Ninguno --</option>
+                            {apoderadosLoading ? (
+                                <option disabled>Loading...</option>
+                            ) : (
+                                apoderados.map(r => <option key={r} value={r}>{r}</option>)
+                            )}
+                        </select>
                     </div>
 
                     <div className="col-md-4 mb-3">

@@ -49,19 +49,17 @@ export default function ListaApoderados(){
                 <table className="table table-bordered">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
                             <th>RUT</th>
+                            <th>Nombre</th>
                             <th>Teléfono</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {valid.map((it, idx) => (
-                            <tr key={it.id_apoderado ?? `ap-${idx}`}>
-                                <td>{it.id_apoderado}</td>
-                                <td>{it.nombre}</td>
+                            <tr key={it.id_apoderado ?? it.rut ?? `ap-${idx}`}>
                                 <td>{it.rut ?? '-'}</td>
+                                <td>{it.nombre}</td>
                                 <td>{it.telefono ?? '-'}</td>
                                 <td>
                                     <div className="d-flex gap-2">
