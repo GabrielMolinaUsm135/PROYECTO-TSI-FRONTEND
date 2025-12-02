@@ -14,7 +14,6 @@ import Home from "./views/Home";
 //CREAR PERFILES
 import CrearUsuario from "./views/CrearPerfiles/CrearUsuario";
 import CrearProfesor from "./views/CrearPerfiles/CrearProfesor";
-import CrearAlumno from "./views/CrearPerfiles/CrearAlumno";
 import ListaProfesores, { loader as ListaProfesoresLoader } from "./views/Profesores/ListaProfesores";
 import EditarProfesor, { loader as EditarProfesorLoader, action as EditarProfesorAction } from "./views/Profesores/EditarProfe";
 import ListaUsuarios from "./views/Admin/ListaUsuarios";
@@ -34,6 +33,7 @@ import ListaPrestamos from "./views/Prestamo/ListaPrestamos";
 import CrearPrestamo from "./views/Prestamo/CrearPrestamo";
 import FichaProfesor, { loader as FichaProfesorLoader } from "./views/Profesores/FichaProfe";
 import EditarNotas, { loader as EditarNotasLoader, action as EditarNotasAction } from "./views/Notas/NotaEdit";
+import CrearAlumno from "./views/CrearPerfiles/CrearAlumno";
 
 export const router = createBrowserRouter([
     {

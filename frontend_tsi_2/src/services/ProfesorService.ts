@@ -72,16 +72,9 @@ export async function getListaProfesor() {
 
 export async function ProfesorEliminar(id_profesor: string | number, id_usuario : string | number) {
     try {
-        // delete profesor by its primary id
+        
     const profesorUrl = `/profesores/${id_profesor}`;
         await axiosInstance.delete(profesorUrl);
-        // if an associated usuario id is provided, delete that user as well
-        // NOTE: skipping deletion of associated `usuario` because backend does not expose
-        // a stable delete endpoint for users in this project. Removing the automatic
-        // deletion avoids 404 errors. If you want to re-enable, implement the exact
-        // endpoint and uncomment the logic above.
-        // We simply return success and indicate userDeleted = null (not attempted).
-
         return { success: true, userDeleted: null };
     } catch (error:any) {
       console.error('Error ProfesorEliminar:', error?.response ?? error);

@@ -102,6 +102,7 @@ export default function FichaAlumno() {
     const [selectedAlergia, setSelectedAlergia] = useState<string | number>('');
     const [addingAlergia, setAddingAlergia] = useState(false);
     const [removingAlergia, setRemovingAlergia] = useState<string | number | null>(null);
+    const [apoderadoRut, setApoderadoRut] = useState<string | null>(null);
 
     useEffect(() => {
         let mounted = true;
@@ -127,6 +128,27 @@ export default function FichaAlumno() {
 
         return () => { mounted = false; };
     }, [alumno, alumnoId]);
+
+    // load apoderado rut when id_apoderado is present (so link can show the actual rut)
+    useEffect(() => {
+        let mounted = true;
+        async function loadApoderadoRut() {
+            try {
+                const id = alumno?.data?.id_apoderado ?? alumno?.id_apoderado ?? null;
+                if (!id) {
+                    if (mounted) setApoderadoRut(null);
+                    return;
+                }
+                const res = await axiosInstance.get(`/apoderados/${encodeURIComponent(String(id))}`);
+                const data = res.data?.data ?? res.data ?? null;
+                if (mounted) setApoderadoRut(data?.rut ?? null);
+            } catch (err) {
+                console.warn('Could not load apoderado rut by id:', err);
+            }
+        }
+        loadApoderadoRut();
+        return () => { mounted = false; };
+    }, [alumno?.data?.id_apoderado]);
 
     async function handleAddAlergia() {
         if (!selectedAlergia || !alumnoId) return;
@@ -256,7 +278,15 @@ export default function FichaAlumno() {
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Rut Apoderado:</h5>
-                                <p>{alumno.data.rut_apoderado}</p>
+                                    {alumno?.data?.id_apoderado ? (
+                                        <p>
+                                            <Link to={`/apoderados/Detalle/${encodeURIComponent(String(alumno.data.id_apoderado))}`}>
+                                                {apoderadoRut ?? alumno.data.rut_apoderado ?? 'Ver Apoderado'}
+                                            </Link>
+                                        </p>
+                                    ) : (
+                                        <p>{alumno.data.rut_apoderado}</p>
+                                    )}
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Nombre:</h5>

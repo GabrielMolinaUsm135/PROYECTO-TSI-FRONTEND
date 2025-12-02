@@ -71,14 +71,28 @@ export default function CrearAlumno() {
                 setLoading(false);
                 return;
             }
+            // determine id_apoderado if a rut was selected
+            let resolved_id_apoderado: number | string | null = null;
+            if (form.apoderado_rut) {
+                try {
+                    const resp = await axiosInstance.get(`/apoderados/rut/${encodeURIComponent(String(form.apoderado_rut))}`);
+                    const apodata = resp.data?.data ?? resp.data ?? null;
+                    // backend may return object with id_apoderado or id
+                    resolved_id_apoderado = apodata?.id_apoderado ?? apodata?.id ?? null;
+                } catch (err) {
+                    console.warn('No se encontró apoderado por RUT seleccionado', err);
+                    // leave resolved_id_apoderado as null; backend may accept rut_apoderado only
+                }
+            }
+
             // prepare payload matching backend shape (convert empty id_apoderado to null, numeric fields)
             const payload: Record<string, any> = {
                 // include both keys to be compatible with different backend expectations
                 rut: form.rut,
                 rut_alumno: form.rut,
-                // backend may accept rut_apoderado; keep id_apoderado=null to avoid mismatches
+                // backend may accept rut_apoderado; also include the resolved numeric id if found
                 rut_apoderado: form.apoderado_rut || null,
-                id_apoderado: null,
+                id_apoderado: resolved_id_apoderado,
                 id_grupo_teoria: Number(form.id_grupo_teoria),
                 fecha_ingreso: form.fecha_ingreso,
                 nombre: form.nombre,

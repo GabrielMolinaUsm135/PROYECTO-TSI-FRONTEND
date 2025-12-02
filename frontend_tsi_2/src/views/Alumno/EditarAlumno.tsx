@@ -1,6 +1,7 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs, useLoaderData, Form } from "react-router-dom";
+import axiosInstance from '../../services/axiosinstance';
 
 export async function loader({ params }: LoaderFunctionArgs) {
     const { rut } = params;
@@ -37,15 +38,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
         throw new Response("Unauthorized", { status: 401 });
     }
 
-    const FormData = Object.fromEntries(await request.formData());
+    const FormData = Object.fromEntries(await request.formData()) as Record<string, any>;
     try {
-        const url = `http://localhost:3000/api/alumno/${rut}`;
-        await axios.put(url, FormData, {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        // If a rut_apoderado was selected, resolve it to id_apoderado using the endpoint
+        if (FormData.rut_apoderado) {
+            try {
+                const res = await axiosInstance.get(`/apoderados/rut/${encodeURIComponent(String(FormData.rut_apoderado))}`);
+                const apodata = res.data?.data ?? res.data ?? null;
+                FormData.id_apoderado = apodata?.id_apoderado ?? apodata?.id ?? null;
+            } catch (err) {
+                console.warn('Could not resolve apoderado by rut:', err);
+                // proceed without id_apoderado (backend can accept rut_apoderado)
+                FormData.id_apoderado = FormData.id_apoderado ?? null;
+            }
+        }
+
+        // Use axiosInstance (baseURL + token interceptor)
+        await axiosInstance.put(`/alumno/${encodeURIComponent(String(rut))}`, FormData, { headers: { 'Content-Type': 'application/json' } });
         return redirect('/Alumno/ListaAlumnos'); // Redirect after successful update
     } catch (error) {
         console.error("Error updating alumno:", error);
@@ -67,9 +76,25 @@ export default function EditarAlumno() {
     const correoAlumno = alumnoData.correo_alumno ?? alumnoData.correo ?? alumnoData.correo_alumno ?? '';
     const direccionAlumno = alumnoData.direccion_alumno ?? alumnoData.direccion ?? alumnoData.direccion_alumno ?? '';
     const diagnosticoNe = alumnoData.diagnostico_ne ?? alumnoData.diagnosticoNe ?? alumnoData.diagnostico_ne ?? '';
-    const anioIngreso = alumnoData.anio_ingreso_orquesta ?? alumnoData.anio_ingreso ?? alumnoData.anio_ingreso_orquesta ?? '';
+    
 
-    const [rutApoderados] = useState(["12345678-9", "98765432-1", "11223344-5"]);
+    const [rutApoderados, setRutApoderados] = useState<string[]>([]);
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadRuts() {
+            try {
+                const res = await axiosInstance.get('/apoderados/ruts');
+                const data = res.data?.data ?? res.data ?? [];
+                const ruts = (Array.isArray(data) ? data : []).map((it: any) => (typeof it === 'string' ? it : it.rut ?? String(it)));
+                if (mounted) setRutApoderados(ruts);
+            } catch (err) {
+                console.warn('Could not fetch apoderados ruts', err);
+            }
+        }
+        loadRuts();
+        return () => { mounted = false; };
+    }, []);
 
     return (
         <>
@@ -133,8 +158,31 @@ export default function EditarAlumno() {
                             <input type="text" id="direccion_alumno" name="direccion_alumno" maxLength={50} required className="form-control" defaultValue={direccionAlumno} />
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
-                            <label htmlFor="anio_ingreso_orquesta" className="form-label">Año Ingreso Orquesta:</label>
-                            <input type="number" id="anio_ingreso_orquesta" name="anio_ingreso_orquesta" min={1900} max={2100} required className="form-control" defaultValue={anioIngreso} />
+                            <label htmlFor="fecha_ingreso" className="form-label">Fecha Ingreso a la Orquesta:</label>
+                            <input
+                                type="date"
+                                id="fecha_ingreso"
+                                name="fecha_ingreso"
+                                required
+                                className="form-control"
+                                defaultValue={(() => {
+                                    const raw = alumnoData.fecha_ingreso ?? alumnoData.anio_ingreso_orquesta ?? alumnoData.anio_ingreso ?? '';
+                                    if (!raw) return '';
+                                    // If it's a 4-digit year, return YYYY-01-01
+                                    if (/^\d{4}$/.test(String(raw))) return `${raw}-01-01`;
+                                    // If it's an ISO or date-like string, normalize to YYYY-MM-DD
+                                    try {
+                                        const d = new Date(String(raw));
+                                        if (isNaN(d.getTime())) return '';
+                                        const yyyy = d.getFullYear();
+                                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                        const dd = String(d.getDate()).padStart(2, '0');
+                                        return `${yyyy}-${mm}-${dd}`;
+                                    } catch (e) {
+                                        return '';
+                                    }
+                                })()}
+                            />
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="diagnostico_ne" className="form-label">Diagnóstico NE:</label>
