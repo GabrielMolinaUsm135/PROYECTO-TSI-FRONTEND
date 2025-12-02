@@ -19,7 +19,7 @@ import ListaProfesores, { loader as ListaProfesoresLoader } from "./views/Profes
 import EditarProfesor, { loader as EditarProfesorLoader, action as EditarProfesorAction } from "./views/Profesores/EditarProfe";
 import ListaUsuarios from "./views/Admin/ListaUsuarios";
 import ListaInstrumentos, { loader as ListaInstrumentosLoader } from "./views/instrumentos&Inusmos/ListaInstrumentos";
-import CrearInstrumento from "./views/instrumentos&Inusmos/CrearInstrumento";
+import CrearInstrumento, { action as CrearInstrumentoAction } from "./views/instrumentos&Inusmos/CrearInstrumento";
 import EditarInstrumento, { loader as EditarInstrumentoLoader } from "./views/instrumentos&Inusmos/EditarInstrumento";
 import EditarInsumo, { loader as EditarInsumoLoader } from "./views/instrumentos&Inusmos/EditarInsumo";
 import ListaPrestamos from "./views/Prestamo/ListaPrestamos";
@@ -116,6 +116,7 @@ export const router = createBrowserRouter([
                         {
                             path: 'Instrumentos/CrearInstrumento',
                             element: <CrearInstrumento />,
+                            action: CrearInstrumentoAction,
                         },
                         {
                             path: 'Insumos/CrearInsumo',
