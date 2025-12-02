@@ -25,7 +25,7 @@ import EditarInsumo, { loader as EditarInsumoLoader } from "./views/instrumentos
 import ListaPrestamos from "./views/Prestamo/ListaPrestamos";
 import CrearPrestamo from "./views/Prestamo/CrearPrestamo";
 import FichaProfesor, { loader as FichaProfesorLoader } from "./views/Profesores/FichaProfe";
-import EditarNotas, { loader as EditarNotasLoader } from "./views/Notas/NotaEdit";
+import EditarNotas, { loader as EditarNotasLoader, action as EditarNotasAction } from "./views/Notas/NotaEdit";
 
 export const router = createBrowserRouter([
     {
@@ -152,6 +152,7 @@ export const router = createBrowserRouter([
                         path: 'alumno/notas/:id',
                         element: <EditarNotas/>,
                         loader: EditarNotasLoader,
+                        action: EditarNotasAction,
                     }
                 ]
             }

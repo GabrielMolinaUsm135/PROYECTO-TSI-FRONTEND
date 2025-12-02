@@ -38,9 +38,42 @@ export async function action({ request, params }: ActionFunctionArgs) {
         throw new Response("Unauthorized", { status: 401 });
     }
 
-    // This route currently only displays notas. If you need to support editing/submitting notas,
-    // implement the appropriate payload and endpoint here. For now, keep the action as a safe no-op.
-    return redirect(`/Notas/Editar/${id}`);
+    // Parse form and update each nota individually
+    const form = await request.formData();
+    const entries: Record<string, any> = {};
+    for (const [k, v] of form.entries()) {
+        entries[k] = v;
+    }
+
+    // collect note groups by index: fields named like id_nota_0, nota_0, nombre_0, fecha_0
+    const updates: Array<{ id_nota: string; nota?: number; nombre_evaluacion?: string; fecha_evaluacion?: string }> = [];
+    const idKeys = Object.keys(entries).filter(k => k.startsWith('id_nota_'));
+    for (const idKey of idKeys) {
+        const idx = idKey.replace('id_nota_', '');
+        const id_nota = String(entries[idKey]);
+        const notaVal = entries[`nota_${idx}`];
+        const nombreVal = entries[`nombre_${idx}`];
+        const fechaVal = entries[`fecha_${idx}`];
+        updates.push({ id_nota, nota: notaVal !== undefined ? Number(notaVal) : undefined, nombre_evaluacion: nombreVal ? String(nombreVal) : undefined, fecha_evaluacion: fechaVal ? String(fechaVal) : undefined });
+    }
+
+    try {
+        for (const u of updates) {
+            if (!u.id_nota) continue;
+            const payload: Record<string, any> = {};
+            if (u.nota !== undefined && !Number.isNaN(u.nota)) payload.nota = u.nota;
+            if (u.nombre_evaluacion) payload.nombre_evaluacion = u.nombre_evaluacion;
+            if (u.fecha_evaluacion) payload.fecha_evaluacion = u.fecha_evaluacion;
+            if (Object.keys(payload).length === 0) continue;
+            const url = `http://localhost:3000/api/notas/${encodeURIComponent(String(u.id_nota))}`;
+            await axios.put(url, payload, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+        }
+        return redirect(`/alumno/notas/${id}`);
+    } catch (err:any) {
+        console.error('Error updating notas:', err?.response ?? err);
+        const msg = err?.response?.data ?? err?.message ?? 'Failed to update notas';
+        return new Response(typeof msg === 'string' ? msg : JSON.stringify(msg), { status: 500 });
+    }
 }
 export default function NotaEdit() {
     const loaderData = useLoaderData() as any;
@@ -51,35 +84,68 @@ export default function NotaEdit() {
         <>
             <div className="row bg-primary text-white py-3 mb-4">
                 <div className="col text-center">
-                    <h1>Notas</h1>
+                    <h1>Editar Notas</h1>
                 </div>
             </div>
 
             <div className="container">
-                <table className="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Evaluación</th>
-                            <th>Nota</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Array.isArray(notas) && notas.length > 0 ? (
-                            notas.map((n: any, idx: number) => (
-                                <tr key={idx}>
-                                    <td>{n.fecha_evaluacion ? new Date(n.fecha_evaluacion).toLocaleDateString() : (n.fecha ? new Date(n.fecha).toLocaleDateString() : '-')}</td>
-                                    <td>{n.nombre_evaluacion ?? n.nombre ?? n.titulo ?? '-'}</td>
-                                    <td>{n.nota ?? n.score ?? n.valor ?? '-'}</td>
-                                </tr>
-                            ))
-                        ) : (
+                <Form method="post">
+                    <table className="table table-striped">
+                        <thead>
                             <tr>
-                                <td colSpan={3} className="text-center">No hay notas disponibles</td>
+                                <th>Fecha</th>
+                                <th>Evaluación</th>
+                                <th>Nota</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {Array.isArray(notas) && notas.length > 0 ? (
+                                notas.map((n: any, idx: number) => {
+                                    const idKey = `id_nota_${idx}`;
+                                    const notaKey = `nota_${idx}`;
+                                    const nombreKey = `nombre_${idx}`;
+                                    const fechaKey = `fecha_${idx}`;
+                                    // format date for input[type=date]
+                                    let fechaVal = '';
+                                    const rawFecha = n.fecha_evaluacion ?? n.fecha ?? n.fecha_eval ?? n.created_at;
+                                    if (rawFecha) {
+                                        const d = new Date(rawFecha);
+                                        if (!isNaN(d.getTime())) {
+                                            const yyyy = d.getFullYear();
+                                            const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                            const dd = String(d.getDate()).padStart(2, '0');
+                                            fechaVal = `${yyyy}-${mm}-${dd}`;
+                                        }
+                                    }
+
+                                    return (
+                                        <tr key={idx}>
+                                            <td>
+                                                <input type="date" name={fechaKey} defaultValue={fechaVal} className="form-control" />
+                                            </td>
+                                            <td>
+                                                <input type="text" name={nombreKey} defaultValue={n.nombre_evaluacion ?? n.nombre ?? n.titulo ?? ''} className="form-control" />
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.1" min="0" max="100" name={notaKey} defaultValue={n.nota ?? n.score ?? n.valor ?? ''} className="form-control" />
+                                            </td>
+                                                <td>
+                                                    <input type="hidden" name={idKey} defaultValue={n.id_nota ?? n.id ?? ''} />
+                                                </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={3} className="text-center">No hay notas disponibles</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    <div className="d-flex justify-content-center">
+                        <button type="submit" className="btn btn-primary">Guardar notas</button>
+                    </div>
+                </Form>
             </div>
         </>
     );

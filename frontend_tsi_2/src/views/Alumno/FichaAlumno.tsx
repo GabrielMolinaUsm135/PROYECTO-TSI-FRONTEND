@@ -189,7 +189,7 @@ export default function FichaAlumno() {
                             <th>Nota 1</th>
                             <th>Nota 2</th>
                             <th>Nota 3</th>
-                            <th>Prueba Final</th>
+                            <th>Nota Final</th>
                             <th>Asistencia %</th>
                         </tr>
                     </thead>
@@ -198,8 +198,8 @@ export default function FichaAlumno() {
                             <td>{notas[0]?.nota ?? '-'}</td>
                             <td>{notas[1]?.nota ?? '-'}</td>
                             <td>{notas[2]?.nota ?? '-'}</td>
+                            <td>{(notas[0]?.nota + notas[1]?.nota + notas[2]?.nota) / 3}</td>
                             <td>{notas[3]?.nota ?? '-'}</td>
-                            <td>{notas[4]?.nota ?? '-'}</td>
                         </tr>
                     </tbody>
                 </table>
