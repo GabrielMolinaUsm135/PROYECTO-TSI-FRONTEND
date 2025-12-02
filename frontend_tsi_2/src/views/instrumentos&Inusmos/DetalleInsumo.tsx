@@ -1,6 +1,9 @@
 import { useLoaderData, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { getInsumo } from '../../services/InsumoService';
+import { getInstrumentosPorInsumo, getListaInstrumentos } from '../../services/InstrumentoService';
 import type { ListaInsumo } from '../../types/insumo';
+import type { ListaInstrumento } from '../../types/instrumento';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -11,6 +14,24 @@ export async function loader({ params }: any) {
 
 export default function DetalleInsumo(){
     const insumo = useLoaderData() as ListaInsumo | null;
+    const [relatedInstruments, setRelatedInstruments] = useState<ListaInstrumento[]>([]);
+
+    useEffect(() => {
+        async function loadRelated() {
+            if (!insumo) return;
+            // fetch relation rows
+            const rels = await getInstrumentosPorInsumo(insumo.cod_insumo);
+            const codes = Array.isArray(rels) ? rels.map((r:any) => String(r.cod_instrumento)) : [];
+
+            // fetch all instruments to match names (efficient enough for small lists)
+            const all = await getListaInstrumentos();
+            const map = new Map((Array.isArray(all) ? all : []).map((it: any) => [it.cod_instrumento, it]));
+
+            const related = codes.map(code => map.get(code) ?? ({ cod_instrumento: code, nombre_instrumento: code }));
+            setRelatedInstruments(related);
+        }
+        loadRelated();
+    }, [insumo]);
     if (!insumo) {
         return (
             <div className="container py-5">
@@ -59,9 +80,18 @@ export default function DetalleInsumo(){
 
                             <div className="card mt-3">
                                 <div className="card-body">
-                                    <h6 className="card-title">Instrumentos relacionados</h6>
-                                    <div className="text-muted">(Vínculos a instrumentos que usan este insumo)</div>
-                                </div>
+                                        <h6 className="card-title">Instrumento relacionados</h6>
+                                        {relatedInstruments.length > 0 ? (
+                                            <ul className="list-group list-group-flush mt-3">
+                                                {relatedInstruments.map((inst:any) => (
+                                                    <li key={inst.cod_instrumento} className="list-group-item d-flex justify-content-between align-items-center">
+                                                        <Link to={`/Instrumentos/Detalle/${inst.cod_instrumento}`}>{inst.nombre_instrumento ?? inst.cod_instrumento}</Link>
+                                                        <small className="text-muted"><span className="badge bg-secondary">{inst.cod_instrumento}</span></small>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : null}
+                                    </div>
                             </div>
                         </div>
                     </div>

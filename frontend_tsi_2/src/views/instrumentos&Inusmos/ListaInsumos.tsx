@@ -54,9 +54,11 @@ export default function ListaInsumos(){
                             </thead>
                             <tbody>
                                 {insumosValidos.map((it) => (
-                                    <tr key={it.cod_insumo}>
+                                        <tr key={it.cod_insumo}>
                                         <td>{it.cod_insumo}</td>
-                                        <td>{it.nombre_insumo}</td>
+                                        <td>
+                                            {it.nombre_insumo}                                            
+                                        </td>
                                         <td>{it.observacion}</td>
                                         <td>
                                             <div className="d-flex gap-2">

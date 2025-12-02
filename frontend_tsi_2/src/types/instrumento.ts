@@ -1,5 +1,3 @@
-import { array, object, string, type InferOutput } from "valibot";
-
 export type Instrumento = {
   cod_instrumento: string;
   nombre_instrumento?: string | null;
@@ -12,16 +10,7 @@ export type Instrumento = {
   }>;
 };
 
-export const listainstrumentosSchema = object({
-    cod_instrumento: string(),
-    nombre_instrumento: string(),
-    modelo_instrumento: string(),
-    observacion: string(),
-});
-
-
-export const ListaInstrumentosSchema = array(listainstrumentosSchema);
-export type ListaInstrumento = InferOutput<typeof listainstrumentosSchema>;
-
+// For list/detail views use the same Instrumento shape
+export type ListaInstrumento = Instrumento;
 
 
