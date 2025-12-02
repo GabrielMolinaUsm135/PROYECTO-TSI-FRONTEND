@@ -4,7 +4,7 @@ import DetalleInstrumento, { loader as DetalleInstrumentoLoader } from "./views/
 import DetalleInsumo, { loader as DetalleInsumoLoader } from "./views/instrumentos&Inusmos/DetalleInsumo";
 import ListaAlumnos, { loader as ListaAlumnosLoader } from "./views/Alumno/ListaAlumnos";
 import ListaInsumos, { loader as ListaInsumosLoader } from "./views/instrumentos&Inusmos/ListaInsumos";
-import CrearInsumo from "./views/instrumentos&Inusmos/CrearInsumo";
+import CrearInsumo, { action as CrearInsumoAction } from "./views/instrumentos&Inusmos/CrearInsumo";
 import Login, {action as loginAction} from "./views/Login";
 import EditarAlumno, {loader as EditarAlumnoLoader, action as EditarAlumnoAction} from "./views/Alumno/EditarAlumno";
 import { PrivateRoute } from "./components/Privateroute";
@@ -121,6 +121,7 @@ export const router = createBrowserRouter([
                         {
                             path: 'Insumos/CrearInsumo',
                             element: <CrearInsumo />,
+                            action: CrearInsumoAction,
                         },
                         {
                             path: 'Insumos/Editar/:id',

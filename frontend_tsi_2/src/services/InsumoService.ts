@@ -1,5 +1,16 @@
 import axiosInstance from './axiosinstance';
 
+export async function crearInsumo(payload: Record<string, any>) {
+  try {
+    // POST to /api/profesores (axiosInstance baseURL = /api)
+    const { data } = await axiosInstance.post('http://localhost:3000/api/insumos', payload, { headers: { 'Content-Type': 'application/json' } });
+    return { success: true, data };
+  } catch (err: any) {
+    console.error('Error crearInsumo:', err);
+    return { success: false, error: err.response?.data?.error ?? err.message ?? 'unexpected error' };
+  }
+}
+
 export async function getListaInsumos() {
   try {
     const { data } = await axiosInstance.get('/insumos');
