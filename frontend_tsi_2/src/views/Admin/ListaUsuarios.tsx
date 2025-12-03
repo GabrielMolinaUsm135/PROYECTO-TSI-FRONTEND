@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData, Link } from 'react-router-dom';
 import type { ListaUsuario } from '../../types/usuario';
 import { getListausuarios } from '../../services/UsuarioService';
 
@@ -43,16 +43,22 @@ export default function ListaUsuarios(){
                         <thead>
                             <tr>
                                 <th>Correo</th>
-                                <th>Rol (id_rol)</th>
+                                <th style={{ width: '90px', textAlign: 'center' }}>Rol (id)</th>
                                 <th>Rol (nombre)</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredLista.map((u, idx) => (
                                 <tr key={u.correo ?? idx}>
                                     <td>{u.correo}</td>
-                                    <td>{String((u as any).id_rol ?? '')}</td>
+                                    <td style={{ width: '90px', textAlign: 'center' }}><small>{String((u as any).id_rol ?? '')}</small></td>
                                     <td>{( {1: 'Administrador', 2: 'Profesor', 3: 'Alumno'} as any)[(u as any).id_rol] ?? (u as any).rol_nombre ?? ''}</td>
+                                    <td>
+                                        <div className="d-flex gap-2">
+                                            <Link to={`/Usuario/editar/${encodeURIComponent((u as any).id_usuario ?? String(idx))}`} className="btn btn-sm btn-outline-secondary">Editar</Link>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
