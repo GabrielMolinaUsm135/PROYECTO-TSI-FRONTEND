@@ -18,6 +18,10 @@ export default function ListaPrestamos() {
     const [insumoNames, setInsumoNames] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState<Record<string | number, boolean>>({});
+    const [nameOrder, setNameOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [stateOrder, setStateOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'pendiente' | 'devuelto'>('all');
+    const [letterFilter, setLetterFilter] = useState<string>('');
 
     useEffect(() => {
         load();
@@ -245,14 +249,100 @@ export default function ListaPrestamos() {
                 </label>
             </div>
 
-            <div className="mb-3 text-end">
-                <Link to="/Prestamo/CrearPrestamo" className="btn btn-primary">Crear Préstamo</Link>
+            <div className="row mb-3">
+                <div className="col-md-3">
+                    <label htmlFor="letterFilter" className="form-label">Filtrar por inicial (item)</label>
+                    <select id="letterFilter" className="form-select" value={letterFilter} onChange={e => setLetterFilter(e.target.value)}>
+                        <option value="">Todos</option>
+                        {Array.from({ length: 26 }).map((_, i) => {
+                            const letter = String.fromCharCode(65 + i);
+                            return <option key={letter} value={letter}>{letter}</option>;
+                        })}
+                    </select>
+                </div>
+                <div className="col-md-3">
+                    <label htmlFor="nameOrder" className="form-label">Ordenar por nombre</label>
+                    <select id="nameOrder" className="form-select" value={nameOrder} onChange={e => { setNameOrder(e.target.value as 'none' | 'asc' | 'desc'); setStateOrder('none'); }}>
+                        <option value="none">--</option>
+                        <option value="asc">A - Z</option>
+                        <option value="desc">Z - A</option>
+                    </select>
+                </div>
+                <div className="col-md-3">
+                    <label htmlFor="stateOrder" className="form-label">Ordenar por estado</label>
+                    <select id="stateOrder" className="form-select" value={stateOrder} onChange={e => { setStateOrder(e.target.value as 'none' | 'asc' | 'desc'); setNameOrder('none'); }}>
+                        <option value="none">--</option>
+                        <option value="asc">Devuelto</option>
+                        <option value="desc">Pendiente</option>
+                    </select>
+                </div>
+                <div className="col-md-3 text-end">
+                    <label htmlFor="statusFilter" className="form-label">Filtrar por estado</label>
+                    <select id="statusFilter" className="form-select d-inline-block" style={{width: 'auto'}} value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)}>
+                        <option value="all">Todos</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="devuelto">Devuelto</option>
+                    </select>
+                    <div className="mt-2">
+                        <Link to="/Prestamo/CrearPrestamo" className="btn btn-primary">Crear Préstamo</Link>
+                    </div>
+                </div>
             </div>
 
             {loading ? (
                 <p>Cargando...</p>
             ) : (
-                <table className="table table-bordered">
+                (() => {
+                    // determine active sort field and order (adapted: nombre OR estado)
+                    let activeField: 'nombre_instrumento' | 'estado' = 'nombre_instrumento';
+                    let activeOrder: 'asc' | 'desc' = 'asc';
+                    if (nameOrder !== 'none') {
+                        activeField = 'nombre_instrumento';
+                        activeOrder = nameOrder as 'asc' | 'desc';
+                    } else if (stateOrder !== 'none') {
+                        activeField = 'estado';
+                        activeOrder = stateOrder as 'asc' | 'desc';
+                    }
+
+                    // apply status filter (pendiente/devuelto) first
+                    const statusFiltered = (statusFilter === 'all')
+                        ? items
+                        : items.filter(i => {
+                            const estadoRaw = (i.estado ?? '').toString().toLowerCase();
+                            if (statusFilter === 'pendiente') return estadoRaw.includes('pendiente');
+                            if (statusFilter === 'devuelto') return estadoRaw.includes('devuelto');
+                            return true;
+                        });
+
+                    // apply letter filter on the resolved item name (instrumento or insumo)
+                    const filtered = letterFilter && letterFilter.length === 1
+                        ? statusFiltered.filter(i => {
+                            const itemCode = (type === 'instrumento' ? i.cod_instrumento : i.cod_insumo) ?? '';
+                            const name = type === 'instrumento' ? (instrumentoNames[String(itemCode)] ?? '') : (insumoNames[String(itemCode)] ?? '');
+                            return name.toString().toUpperCase().startsWith(letterFilter);
+                        })
+                        : statusFiltered;
+
+                    const sorted = [...filtered].sort((a, b) => {
+                        if (activeField === 'nombre_instrumento') {
+                            const aCode = (type === 'instrumento' ? a.cod_instrumento : a.cod_insumo) ?? '';
+                            const bCode = (type === 'instrumento' ? b.cod_instrumento : b.cod_insumo) ?? '';
+                            const aName = type === 'instrumento' ? (instrumentoNames[String(aCode)] ?? '') : (insumoNames[String(aCode)] ?? '');
+                            const bName = type === 'instrumento' ? (instrumentoNames[String(bCode)] ?? '') : (insumoNames[String(bCode)] ?? '');
+                            const cmp = aName.toString().localeCompare(bName.toString(), 'es', { sensitivity: 'base' });
+                            return activeOrder === 'asc' ? cmp : -cmp;
+                        }
+                        // otherwise sort by estado
+                        const aVal = (a.estado ?? '').toString();
+                        const bVal = (b.estado ?? '').toString();
+                        const cmp = aVal.localeCompare(bVal, 'es', { sensitivity: 'base' });
+                        return activeOrder === 'asc' ? cmp : -cmp;
+                    });
+
+                    const showItems = sorted;
+
+                    return (
+                        <table className="table table-bordered">
                     <thead className="table-light">
                         <tr>
                             <th>Código</th>
@@ -266,10 +356,10 @@ export default function ListaPrestamos() {
                         </tr>
                     </thead>
                     <tbody>
-                        {items.length === 0 ? (
+                        {showItems.length === 0 ? (
                             <tr><td colSpan={7} className="text-center">No hay préstamos</td></tr>
                         ) : (
-                            items.map((it: any) => {
+                            showItems.map((it: any) => {
                                 const code = Number(it.cod_prestamo ?? it.cod ?? NaN);
                                 return (
                                     <tr key={code}>
@@ -326,6 +416,8 @@ export default function ListaPrestamos() {
                         )}
                     </tbody>
                 </table>
+                    );
+                })()
             )}
         </div>
         </>
