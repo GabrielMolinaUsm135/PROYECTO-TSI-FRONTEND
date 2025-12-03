@@ -261,7 +261,7 @@ export default function ListaPrestamos() {
                     </select>
                 </div>
                 <div className="col-md-3">
-                    <label htmlFor="nameOrder" className="form-label">Ordenar por nombre</label>
+                    <label htmlFor="nameOrder" className="form-label">Ordenar por inicial de alumno</label>
                     <select id="nameOrder" className="form-select" value={nameOrder} onChange={e => { setNameOrder(e.target.value as 'none' | 'asc' | 'desc'); setStateOrder('none'); }}>
                         <option value="none">--</option>
                         <option value="asc">A - Z</option>
@@ -293,11 +293,11 @@ export default function ListaPrestamos() {
                 <p>Cargando...</p>
             ) : (
                 (() => {
-                    // determine active sort field and order (adapted: nombre OR estado)
-                    let activeField: 'nombre_instrumento' | 'estado' = 'nombre_instrumento';
+                    // determine active sort field and order (adapted: alumno OR estado)
+                    let activeField: 'alumno' | 'estado' = 'alumno';
                     let activeOrder: 'asc' | 'desc' = 'asc';
                     if (nameOrder !== 'none') {
-                        activeField = 'nombre_instrumento';
+                        activeField = 'alumno';
                         activeOrder = nameOrder as 'asc' | 'desc';
                     } else if (stateOrder !== 'none') {
                         activeField = 'estado';
@@ -324,11 +324,11 @@ export default function ListaPrestamos() {
                         : statusFiltered;
 
                     const sorted = [...filtered].sort((a, b) => {
-                        if (activeField === 'nombre_instrumento') {
-                            const aCode = (type === 'instrumento' ? a.cod_instrumento : a.cod_insumo) ?? '';
-                            const bCode = (type === 'instrumento' ? b.cod_instrumento : b.cod_insumo) ?? '';
-                            const aName = type === 'instrumento' ? (instrumentoNames[String(aCode)] ?? '') : (insumoNames[String(aCode)] ?? '');
-                            const bName = type === 'instrumento' ? (instrumentoNames[String(bCode)] ?? '') : (insumoNames[String(bCode)] ?? '');
+                        if (activeField === 'alumno') {
+                            const aId = a.id_usuario ?? '';
+                            const bId = b.id_usuario ?? '';
+                            const aName = (alumnoNames[String(aId)] ?? (a.nombre_alumno ?? a.nombre ?? '')) as string;
+                            const bName = (alumnoNames[String(bId)] ?? (b.nombre_alumno ?? b.nombre ?? '')) as string;
                             const cmp = aName.toString().localeCompare(bName.toString(), 'es', { sensitivity: 'base' });
                             return activeOrder === 'asc' ? cmp : -cmp;
                         }
