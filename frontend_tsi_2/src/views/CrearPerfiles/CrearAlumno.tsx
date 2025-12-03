@@ -154,8 +154,8 @@ export default function CrearAlumno() {
 
                 <div className="row">
                     <div className="col-md-4 mb-3">
-                        <label className="form-label">RUT</label>
-                        <input name="rut" className="form-control" value={form.rut} onChange={handleChange} placeholder="12.345.678-9" required />
+                        <label className="form-label">RUT (Sin puntos con guion)</label>
+                        <input name="rut" className="form-control" value={form.rut} onChange={handleChange} placeholder="12345678-9" required />
                     </div>
                     <div className="col-md-4 mb-3">
                         <label className="form-label">Nombre</label>

@@ -32,6 +32,8 @@ import DetalleApoderado, { loader as DetalleApoderadoLoader } from "./views/Apod
 import EditarApoderado, { loader as EditarApoderadoLoader } from "./views/Apoderados/EditarApoderado";
 import ListaPrestamos from "./views/Prestamo/ListaPrestamos";
 import CrearPrestamo from "./views/Prestamo/CrearPrestamo";
+import EditarPrestamoInstrumento from "./views/Prestamo/EditarPrestamoInstrumento";
+import EditarPrestamoInsumo from "./views/Prestamo/EditarPrestamoInsumo";
 import FichaProfesor, { loader as FichaProfesorLoader } from "./views/Profesores/FichaProfe";
 import EditarNotas, { loader as EditarNotasLoader, action as EditarNotasAction } from "./views/Notas/NotaEdit";
 import CrearAlumno from "./views/CrearPerfiles/CrearAlumno";
@@ -172,6 +174,14 @@ export const router = createBrowserRouter([
                         {
                             path: 'Prestamo/CrearPrestamo',
                             element: <CrearPrestamo />,
+                        },
+                        {
+                            path: 'Prestamo/EditarInstrumento/:id',
+                            element: <EditarPrestamoInstrumento />,
+                        },
+                        {
+                            path: 'Prestamo/EditarInsumo/:id',
+                            element: <EditarPrestamoInsumo />,
                         },
                         // ALERGIAS
                         {

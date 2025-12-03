@@ -68,7 +68,7 @@ export default function Home() {
                                     <div className="mb-3">
                                         <div className="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style={{ width:48, height:48 }}>R</div>
                                     </div>
-                                    <h5 className="card-title">Administradores</h5>
+                                    <h5 className="card-title">Usuarios</h5>
                                     <div className="mt-auto text-success">Ir &rarr;</div>
                                 </div>
                             </div>
@@ -105,7 +105,7 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* removed separate Alergias and Listados sections - moved into Administración */}
+            
 
             {/* INSTRUMENTOS E INSUMOS */}
             <section className="mb-4">

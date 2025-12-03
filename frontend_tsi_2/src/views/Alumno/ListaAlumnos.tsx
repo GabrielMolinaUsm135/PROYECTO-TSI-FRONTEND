@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { alumnoEliminar, getListaAlumnos } from "../../services/AlumnoService";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { Link, useLoaderData, useNavigate } from "react-router-dom";
 import type { ListaAlumno } from "../../types/alumno";
 import ListaAlumnoFila from "../../components/ListaAlumnoFila";
 
@@ -101,6 +101,9 @@ export default function ListaAlumnos() {
                             <option value="asc">A - Z</option>
                             <option value="desc">Z - A</option>
                         </select>
+                    </div>
+                    <div className="col text-end">
+                        <Link to="/CrearAlumno" className="btn btn-primary">Crear alumno</Link>
                     </div>
                 </div>
                 <div className="row">
