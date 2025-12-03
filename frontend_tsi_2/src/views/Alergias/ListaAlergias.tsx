@@ -11,6 +11,9 @@ export async function loader() {
 export default function ListaAlergias(){
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<number | string | null>(null);
+    const [nameOrder, setNameOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [codeOrder, setCodeOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [letterFilter, setLetterFilter] = useState<string>('');
     const navigate = useNavigate();
 
     const openModal = (id: number | string) => { setSelectedId(id); setIsModalOpen(true); };
@@ -30,6 +33,51 @@ export default function ListaAlergias(){
     const items = useLoaderData() as ListaAlergia[];
     const valid = Array.isArray(items) ? items : [];
 
+    // determine active sort field and order
+    let activeField: 'nombre_alergia' | 'cod_alergia' = 'nombre_alergia';
+    let activeOrder: 'asc' | 'desc' = 'asc';
+    if (nameOrder !== 'none') {
+        activeField = 'nombre_alergia';
+        activeOrder = nameOrder as 'asc' | 'desc';
+    } else if (codeOrder !== 'none') {
+        activeField = 'cod_alergia';
+        activeOrder = codeOrder as 'asc' | 'desc';
+    }
+
+    // apply letter filter on the first meaningful character of nombre_alergia
+    const stripPrefix = (s: string) => {
+        if (!s) return '';
+        // remove common leading phrases like "Alergia al", "Alergia a la", "Alergia a", etc.
+        return s.replace(/^\s*(Alergia\s+(al|a la|a los|a las|a)\s*)/i, '').trim();
+    };
+
+    const filtered = letterFilter && letterFilter.length === 1
+        ? valid.filter(i => {
+            const raw = (i.nombre_alergia ?? '').toString();
+            const stripped = stripPrefix(raw);
+            return stripped.toUpperCase().startsWith(letterFilter);
+        })
+        : valid;
+
+    const sortedAlergias = [...filtered].sort((a, b) => {
+        const aVal = (a[activeField] ?? '').toString();
+        const bVal = (b[activeField] ?? '').toString();
+
+        // If sorting by code, attempt numeric comparison (handles numeric codes)
+        if (activeField === 'cod_alergia') {
+            // Try to extract numbers from the codes (e.g., "12" or "A-12")
+            const aNum = Number((aVal || '').replace(/[^0-9\-\.]/g, ''));
+            const bNum = Number((bVal || '').replace(/[^0-9\-\.]/g, ''));
+            if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+                return activeOrder === 'asc' ? aNum - bNum : bNum - aNum;
+            }
+            // Fallback: if numeric parse fails, fall back to string compare
+        }
+
+        const cmp = aVal.localeCompare(bVal, 'es', { sensitivity: 'base' });
+        return activeOrder === 'asc' ? cmp : -cmp;
+    });
+
     return (
         <>
          <div className="row bg-primary text-white py-3 mb-5">
@@ -37,14 +85,32 @@ export default function ListaAlergias(){
                     <h1>Lista de Alergias</h1>
                 </div>
             </div>
-        <div className="container py-4">           
+            <div className="container py-4">           
             <div className="row mb-3">
+                <div className="col-md-3">
+                    <label htmlFor="letterFilter" className="form-label">Filtrar por inicial (nombre)</label>
+                    <select id="letterFilter" className="form-select" value={letterFilter} onChange={e => setLetterFilter(e.target.value)}>
+                        <option value="">Todos</option>
+                        {Array.from({ length: 26 }).map((_, i) => {
+                            const letter = String.fromCharCode(65 + i);
+                            return <option key={letter} value={letter}>{letter}</option>;
+                        })}
+                    </select>
+                </div>
+                <div className="col-md-3">
+                    <label htmlFor="codeOrder" className="form-label">Ordenar por código</label>
+                    <select id="codeOrder" className="form-select" value={codeOrder} onChange={e => { setCodeOrder(e.target.value as 'none' | 'asc' | 'desc'); setNameOrder('none'); }}>
+                        <option value="none">--</option>
+                        <option value="asc">Menor - Mayor</option>
+                        <option value="desc">Mayor - Menor</option>
+                    </select>
+                </div>
                 <div className="col text-end">
                     <Link to="/Alergias/CrearAlergia" className="btn btn-primary">Crear alergia</Link>
                 </div>
             </div>
 
-            {valid.length === 0 ? (
+            {sortedAlergias.length === 0 ? (
                 <div className="text-muted">No hay alergias.</div>
             ) : (
                 <table className="table table-bordered">
@@ -56,7 +122,7 @@ export default function ListaAlergias(){
                         </tr>
                     </thead>
                     <tbody>
-                        {valid.map(it => (
+                        {sortedAlergias.map(it => (
                             <tr key={it.cod_alergia}>
                                 <td>{it.cod_alergia}</td>
                                 <td>{it.nombre_alergia}</td>

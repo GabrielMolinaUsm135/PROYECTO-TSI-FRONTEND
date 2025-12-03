@@ -15,6 +15,9 @@ export async function loader() {
 export default function ListaProfesores() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProfesor, setSelectedProfesor] = useState<ListaProfesor | null>(null); // store selected profesor object
+    const [nameOrder, setNameOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [apellidoOrder, setApellidoOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [letterFilter, setLetterFilter] = useState<string>('');
     const navigate = useNavigate(); // React Router's navigation hook
 
     const openModal = (profesor: ListaProfesor) => {
@@ -88,6 +91,29 @@ export default function ListaProfesores() {
     const profesoresValidos = Array.isArray(Profesores) ? Profesores : [];
     console.log('✅ Profesores válidos para mostrar:', profesoresValidos, 'Cantidad:', profesoresValidos.length);
     
+    // determine active sort field and order
+    let activeField: 'nombre' | 'apellido_paterno' = 'nombre';
+    let activeOrder: 'asc' | 'desc' = 'asc';
+    if (nameOrder !== 'none') {
+        activeField = 'nombre';
+        activeOrder = nameOrder as 'asc' | 'desc';
+    } else if (apellidoOrder !== 'none') {
+        activeField = 'apellido_paterno';
+        activeOrder = apellidoOrder as 'asc' | 'desc';
+    }
+
+    // apply letter filter on nombre
+    const filteredProfesores = letterFilter && letterFilter.length === 1
+        ? profesoresValidos.filter(p => (p.nombre ?? '').toString().toUpperCase().startsWith(letterFilter))
+        : profesoresValidos;
+
+    const sortedProfesores = [...filteredProfesores].sort((a, b) => {
+        const aVal = (a[activeField] ?? '').toString();
+        const bVal = (b[activeField] ?? '').toString();
+        const cmp = aVal.localeCompare(bVal, 'es', { sensitivity: 'base' });
+        return activeOrder === 'asc' ? cmp : -cmp;
+    });
+    
     return (
         <>
             <div className="row bg-primary text-white py-3 mb-5">
@@ -97,10 +123,36 @@ export default function ListaProfesores() {
             </div>
             <div className="container">
                 <div className="row mb-3">
-                                <div className="col text-end">
-                                    <Link to="/CrearProfesor" className="btn btn-primary">Crear profesor</Link>
-                                </div>
-                            </div>
+                    <div className="col-md-3">
+                        <label htmlFor="letterFilter" className="form-label">Filtrar por inicial (nombre)</label>
+                        <select id="letterFilter" className="form-select" value={letterFilter} onChange={e => setLetterFilter(e.target.value)}>
+                            <option value="">Todos</option>
+                            {Array.from({ length: 26 }).map((_, i) => {
+                                const letter = String.fromCharCode(65 + i);
+                                return <option key={letter} value={letter}>{letter}</option>;
+                            })}
+                        </select>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="nameOrder" className="form-label">Ordenar por nombre</label>
+                        <select id="nameOrder" className="form-select" value={nameOrder} onChange={e => { setNameOrder(e.target.value as 'none' | 'asc' | 'desc'); setApellidoOrder('none'); }}>
+                            <option value="none">--</option>
+                            <option value="asc">A - Z</option>
+                            <option value="desc">Z - A</option>
+                        </select>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="apellidoOrder" className="form-label">Ordenar por apellido</label>
+                        <select id="apellidoOrder" className="form-select" value={apellidoOrder} onChange={e => { setApellidoOrder(e.target.value as 'none' | 'asc' | 'desc'); setNameOrder('none'); }}>
+                            <option value="none">--</option>
+                            <option value="asc">A - Z</option>
+                            <option value="desc">Z - A</option>
+                        </select>
+                    </div>
+                    <div className="col text-end">
+                        <Link to="/CrearProfesor" className="btn btn-primary">Crear profesor</Link>
+                    </div>
+                </div>
                 <div className="row">
                     <table className="table table-bordered">
                         <thead>
@@ -114,7 +166,7 @@ export default function ListaProfesores() {
                             </tr>
                         </thead>
                         <tbody>
-                            {profesoresValidos.map((profesor) => (
+                            {sortedProfesores.map((profesor) => (
                                 <ListaProfesorFila
                                     key={profesor.rut}
                                     profesor={profesor}

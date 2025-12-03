@@ -11,6 +11,9 @@ export async function loader() {
 export default function ListaInsumos(){
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedCod, setSelectedCod] = useState<string | null>(null);
+    const [nameOrder, setNameOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [codeOrder, setCodeOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [letterFilter, setLetterFilter] = useState<string>('');
     const navigate = useNavigate();
 
     const openModal = (cod: string) => { setSelectedCod(cod); setIsModalOpen(true); };
@@ -24,11 +27,34 @@ export default function ListaInsumos(){
             return;
         }
         closeModal();
-        navigate('/ListaInsumos');
+        navigate('/Insumos/ListaInsumos');
     };
 
     const insumos = useLoaderData() as ListaInsumo[];
     const insumosValidos = Array.isArray(insumos) ? insumos : [];
+
+    // determine active sort field and order
+    let activeField: 'nombre_insumo' | 'cod_insumo' = 'nombre_insumo';
+    let activeOrder: 'asc' | 'desc' = 'asc';
+    if (nameOrder !== 'none') {
+        activeField = 'nombre_insumo';
+        activeOrder = nameOrder as 'asc' | 'desc';
+    } else if (codeOrder !== 'none') {
+        activeField = 'cod_insumo';
+        activeOrder = codeOrder as 'asc' | 'desc';
+    }
+
+    // apply letter filter on nombre_insumo
+    const filteredInsumos = letterFilter && letterFilter.length === 1
+        ? insumosValidos.filter(i => (i.nombre_insumo ?? '').toString().toUpperCase().startsWith(letterFilter))
+        : insumosValidos;
+
+    const sortedInsumos = [...filteredInsumos].sort((a, b) => {
+        const aVal = (a[activeField] ?? '').toString();
+        const bVal = (b[activeField] ?? '').toString();
+        const cmp = aVal.localeCompare(bVal, 'es', { sensitivity: 'base' });
+        return activeOrder === 'asc' ? cmp : -cmp;
+    });
 
     return(
         <>
@@ -40,12 +66,38 @@ export default function ListaInsumos(){
 
             <div className="container">
                 <div className="row mb-3">
-                <div className="col text-end">
-                    <Link to="/Insumos/CrearInsumo" className="btn btn-primary">Crear insumo</Link>
+                    <div className="col-md-3">
+                        <label htmlFor="letterFilter" className="form-label">Filtrar por inicial (nombre)</label>
+                        <select id="letterFilter" className="form-select" value={letterFilter} onChange={e => setLetterFilter(e.target.value)}>
+                            <option value="">Todos</option>
+                            {Array.from({ length: 26 }).map((_, i) => {
+                                const letter = String.fromCharCode(65 + i);
+                                return <option key={letter} value={letter}>{letter}</option>;
+                            })}
+                        </select>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="nameOrder" className="form-label">Ordenar por nombre</label>
+                        <select id="nameOrder" className="form-select" value={nameOrder} onChange={e => { setNameOrder(e.target.value as 'none' | 'asc' | 'desc'); setCodeOrder('none'); }}>
+                            <option value="none">--</option>
+                            <option value="asc">A - Z</option>
+                            <option value="desc">Z - A</option>
+                        </select>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="codeOrder" className="form-label">Ordenar por código</label>
+                        <select id="codeOrder" className="form-select" value={codeOrder} onChange={e => { setCodeOrder(e.target.value as 'none' | 'asc' | 'desc'); setNameOrder('none'); }}>
+                            <option value="none">--</option>
+                            <option value="asc">A - Z</option>
+                            <option value="desc">Z - A</option>
+                        </select>
+                    </div>
+                    <div className="col text-end">
+                        <Link to="/Insumos/CrearInsumo" className="btn btn-primary">Crear insumo</Link>
+                    </div>
                 </div>
-            </div>
                 <div className="row">
-                    {insumosValidos.length === 0 ? (
+                    {sortedInsumos.length === 0 ? (
                         <div className="col-12 py-5 text-center text-muted">No hay insumos para mostrar.</div>
                     ) : (
                         <table className="table table-bordered">
@@ -58,7 +110,7 @@ export default function ListaInsumos(){
                                 </tr>
                             </thead>
                             <tbody>
-                                {insumosValidos.map((it) => (
+                                {sortedInsumos.map((it) => (
                                         <tr key={it.cod_insumo}>
                                         <td>{it.cod_insumo}</td>
                                         <td>

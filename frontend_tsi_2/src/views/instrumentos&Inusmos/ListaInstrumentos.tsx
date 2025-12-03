@@ -11,6 +11,9 @@ export async function loader() {
 export default function ListaInstrumentos() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedCod, setSelectedCod] = useState<string | null>(null);
+    const [nameOrder, setNameOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [modelOrder, setModelOrder] = useState<'none' | 'asc' | 'desc'>('none');
+    const [letterFilter, setLetterFilter] = useState<string>('');
     const navigate = useNavigate();
 
     const openModal = (cod: string) => {
@@ -37,6 +40,29 @@ export default function ListaInstrumentos() {
     const instrumentos = useLoaderData() as ListaInstrumento[];
     const instrumentosValidos = Array.isArray(instrumentos) ? instrumentos : [];
 
+    // determine active sort field and order
+    let activeField: 'nombre_instrumento' | 'modelo_instrumento' = 'nombre_instrumento';
+    let activeOrder: 'asc' | 'desc' = 'asc';
+    if (nameOrder !== 'none') {
+        activeField = 'nombre_instrumento';
+        activeOrder = nameOrder as 'asc' | 'desc';
+    } else if (modelOrder !== 'none') {
+        activeField = 'modelo_instrumento';
+        activeOrder = modelOrder as 'asc' | 'desc';
+    }
+
+    // apply letter filter on nombre_instrumento
+    const filteredInstrumentos = letterFilter && letterFilter.length === 1
+        ? instrumentosValidos.filter(i => (i.nombre_instrumento ?? '').toString().toUpperCase().startsWith(letterFilter))
+        : instrumentosValidos;
+
+    const sortedInstrumentos = [...filteredInstrumentos].sort((a, b) => {
+        const aVal = (a[activeField] ?? '').toString();
+        const bVal = (b[activeField] ?? '').toString();
+        const cmp = aVal.localeCompare(bVal, 'es', { sensitivity: 'base' });
+        return activeOrder === 'asc' ? cmp : -cmp;
+    });
+
     return (
         <>
             <div className="row bg-primary text-white py-3 mb-5">
@@ -47,12 +73,38 @@ export default function ListaInstrumentos() {
 
             <div className="container">
                 <div className="row mb-3">
-                <div className="col text-end">
-                    <Link to="/Instrumentos/CrearInstrumento" className="btn btn-primary">Crear instrumento</Link>
+                     <div className="col-md-3">
+                        <label htmlFor="letterFilter" className="form-label">Filtrar por inicial (nombre)</label>
+                        <select id="letterFilter" className="form-select" value={letterFilter} onChange={e => setLetterFilter(e.target.value)}>
+                            <option value="">Todos</option>
+                            {Array.from({ length: 26 }).map((_, i) => {
+                                const letter = String.fromCharCode(65 + i);
+                                return <option key={letter} value={letter}>{letter}</option>;
+                            })}
+                        </select>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="nameOrder" className="form-label">Ordenar por nombre</label>
+                        <select id="nameOrder" className="form-select" value={nameOrder} onChange={e => { setNameOrder(e.target.value as 'none' | 'asc' | 'desc'); setModelOrder('none'); }}>
+                            <option value="none">--</option>
+                            <option value="asc">A - Z</option>
+                            <option value="desc">Z - A</option>
+                        </select>
+                    </div>
+                    <div className="col-md-3">
+                        <label htmlFor="modelOrder" className="form-label">Ordenar por modelo</label>
+                        <select id="modelOrder" className="form-select" value={modelOrder} onChange={e => { setModelOrder(e.target.value as 'none' | 'asc' | 'desc'); setNameOrder('none'); }}>
+                            <option value="none">--</option>
+                            <option value="asc">A - Z</option>
+                            <option value="desc">Z - A</option>
+                        </select>
+                    </div>
+                    <div className="col text-end">
+                        <Link to="/Instrumentos/CrearInstrumento" className="btn btn-primary">Crear instrumento</Link>
+                    </div>
                 </div>
-            </div>
                 <div className="row">
-                    {instrumentosValidos.length === 0 ? (
+                    {sortedInstrumentos.length === 0 ? (
                         <div className="col-12 py-5 text-center text-muted">No hay instrumentos para mostrar.</div>
                     ) : (
                         <table className="table table-bordered">
@@ -67,7 +119,7 @@ export default function ListaInstrumentos() {
                             </tr>
                         </thead>
                         <tbody>
-                            {instrumentosValidos.map((inst) => (
+                            {sortedInstrumentos.map((inst) => (
                                 <tr key={inst.cod_instrumento}>
                                     <td>{inst.cod_instrumento}</td>
                                     <td>{inst.nombre_instrumento}</td>
