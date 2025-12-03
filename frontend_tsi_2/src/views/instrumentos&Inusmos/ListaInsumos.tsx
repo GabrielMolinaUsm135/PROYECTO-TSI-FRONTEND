@@ -27,7 +27,7 @@ export default function ListaInsumos(){
             return;
         }
         closeModal();
-        navigate('/Insumos/ListaInsumos');
+        navigate('/ListaInsumos');
     };
 
     const insumos = useLoaderData() as ListaInsumo[];

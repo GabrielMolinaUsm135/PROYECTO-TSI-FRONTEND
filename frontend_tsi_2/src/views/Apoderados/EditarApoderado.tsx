@@ -21,7 +21,9 @@ export default function EditarApoderado(){
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!ap) return;
-        const payload = { rut, nombre, correo, telefono };
+        const tel = String(telefono ?? '');
+        const normalizedTel = tel.startsWith('+') ? tel : `+569${tel}`;
+        const payload = { rut, nombre, correo, telefono: normalizedTel };
         const res = await actualizarApoderado(ap.id_apoderado!, payload);
         if (!res.success) { alert('Error actualizando apoderado'); return; }
         navigate('/Apoderados/ListaApoderados');
@@ -34,7 +36,7 @@ export default function EditarApoderado(){
             <h2>Editar Apoderado</h2>
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                    <label className="form-label">RUT</label>
+                    <label className="form-label">RUT (Sin puntos con guion) - 00000000-0</label>
                     <input className="form-control" value={rut} onChange={e => setRut(e.target.value)} />
                 </div>
 
@@ -50,7 +52,10 @@ export default function EditarApoderado(){
 
                 <div className="mb-3">
                     <label className="form-label">Teléfono</label>
-                    <input className="form-control" value={telefono} onChange={e => setTelefono(e.target.value)} />
+                    <div className="input-group">
+                        <span className="input-group-text">+569</span>
+                        <input className="form-control" value={telefono} onChange={e => setTelefono(e.target.value.replace(/^\+569/, ''))} />
+                    </div>
                 </div>
 
                 <div>

@@ -127,8 +127,7 @@ export default function ListaAlergias(){
                                 <td>{it.cod_alergia}</td>
                                 <td>{it.nombre_alergia}</td>
                                 <td>
-                                    <div className="d-flex gap-2">
-                                        <Link to={`/Alergias/Detalle/${it.cod_alergia}`} className="btn btn-sm btn-outline-primary">Ver</Link>
+                                    <div className="d-flex gap-2">                                        
                                         <Link to={`/Alergias/Editar/${it.cod_alergia}`} className="btn btn-sm btn-outline-secondary">Editar</Link>
                                         <button className="btn btn-sm btn-danger" onClick={() => openModal(it.cod_alergia)}>Eliminar</button>
                                     </div>

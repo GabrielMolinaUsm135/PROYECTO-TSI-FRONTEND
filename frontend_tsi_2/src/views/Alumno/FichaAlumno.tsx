@@ -2,6 +2,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs, useNavigate } from "react
 import { useEffect, useState } from 'react';
 import axios from "axios";
 import axiosInstance from "../../services/axiosinstance";
+import { actualizarPrestamoInstrumento, actualizarPrestamoInsumo } from '../../services/PrestamoService';
 import { getListaAlergias, crearAlumnoAlergia, getAlergiasPorAlumno, eliminarAlumnoAlergia } from '../../services/AlergiaService';
 import type { Alergia } from '../../types/alergia';
 
@@ -103,6 +104,11 @@ export default function FichaAlumno() {
     const [addingAlergia, setAddingAlergia] = useState(false);
     const [removingAlergia, setRemovingAlergia] = useState<string | number | null>(null);
     const [apoderadoRut, setApoderadoRut] = useState<string | null>(null);
+    const [grupoNombre, setGrupoNombre] = useState<string | null>(null);
+    const [prestamosInstrumento, setPrestamosInstrumento] = useState<any[]>([]);
+    const [prestamosInsumo, setPrestamosInsumo] = useState<any[]>([]);
+    const [loadingPrestamos, setLoadingPrestamos] = useState(false);
+    const [actionLoading, setActionLoading] = useState<Record<string | number, boolean>>({});
 
     useEffect(() => {
         let mounted = true;
@@ -149,6 +155,98 @@ export default function FichaAlumno() {
         loadApoderadoRut();
         return () => { mounted = false; };
     }, [alumno?.data?.id_apoderado]);
+
+    // fetch grupo teoria name by id_grupo_teoria
+    useEffect(() => {
+        let mounted = true;
+        async function loadGrupo() {
+            try {
+                const id = alumno?.data?.id_grupo_teoria ?? alumno?.id_grupo_teoria ?? null;
+                if (!id) {
+                    if (mounted) setGrupoNombre(null);
+                    return;
+                }
+                const res = await axiosInstance.get(`/grupos/${encodeURIComponent(String(id))}`);
+                const data = res.data?.data ?? res.data ?? null;
+                if (mounted) setGrupoNombre(data?.nombre_grupo ?? null);
+            } catch (err) {
+                console.warn('Could not load grupo teoria by id:', err);
+                if (mounted) setGrupoNombre(null);
+            }
+        }
+        loadGrupo();
+        return () => { mounted = false; };
+    }, [alumno?.data?.id_grupo_teoria, alumno?.id_grupo_teoria]);
+
+    // fetch prestamos for this alumno (both instrumento and insumo)
+    useEffect(() => {
+        let mounted = true;
+        async function loadPrestamos() {
+            setLoadingPrestamos(true);
+            try {
+                const idUsuario = alumno?.data?.id_usuario ?? alumno?.data?.id_user ?? alumno?.id_usuario ?? alumno?.id_user ?? null;
+                if (!idUsuario) {
+                    if (mounted) {
+                        setPrestamosInstrumento([]);
+                        setPrestamosInsumo([]);
+                    }
+                    return;
+                }
+                const res = await axiosInstance.get(`/prestamos/usuario/${encodeURIComponent(String(idUsuario))}`);
+                const data = res.data?.data ?? res.data ?? {};
+                if (mounted) {
+                    setPrestamosInstrumento(Array.isArray(data?.prestamos_instrumento) ? data.prestamos_instrumento : []);
+                    setPrestamosInsumo(Array.isArray(data?.prestamos_insumo) ? data.prestamos_insumo : []);
+                }
+            } catch (err) {
+                console.warn('Error loading prestamos for alumno', err);
+                if (mounted) {
+                    setPrestamosInstrumento([]);
+                    setPrestamosInsumo([]);
+                }
+            } finally {
+                if (mounted) setLoadingPrestamos(false);
+            }
+        }
+        loadPrestamos();
+        return () => { mounted = false; };
+    }, [alumno?.data?.id_usuario, alumno?.data?.id_user]);
+
+    async function handleEntregarPrestamo(p: any, tipo: 'instrumento' | 'insumo') {
+        const idParam = p.cod_prestamo ?? p.cod ?? (Number(p.cod_prestamo ?? p.cod) || null);
+        if (!idParam) return;
+        const estadoActual: string = (p.estado ?? '').toString().toLowerCase();
+        if (estadoActual.includes('devuelto')) return;
+
+        const fechaDev = p.fecha_devolucion ? new Date(String(p.fecha_devolucion).slice(0,10)) : null;
+        const today = new Date();
+        const todayYMD = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+        let nuevoEstado = 'devuelto';
+        if (fechaDev && fechaDev < todayYMD) nuevoEstado = 'devuelto atrasado';
+
+        setActionLoading(prev => ({ ...prev, [idParam]: true }));
+        try {
+            let res;
+            if (tipo === 'instrumento') res = await actualizarPrestamoInstrumento(idParam, { estado: nuevoEstado });
+            else res = await actualizarPrestamoInsumo(idParam, { estado: nuevoEstado });
+
+            if (res?.success) {
+                // update local state
+                if (tipo === 'instrumento') {
+                    setPrestamosInstrumento(prev => prev.map(it => ( (it.cod_prestamo ?? it.cod) === (p.cod_prestamo ?? p.cod) ? { ...it, estado: nuevoEstado } : it )));
+                } else {
+                    setPrestamosInsumo(prev => prev.map(it => ( (it.cod_prestamo ?? it.cod) === (p.cod_prestamo ?? p.cod) ? { ...it, estado: nuevoEstado } : it )));
+                }
+            } else {
+                alert('Error al marcar préstamo como entregado');
+            }
+        } catch (err) {
+            console.error('Error entregando prestamo', err);
+            alert('Error al marcar préstamo como entregado');
+        } finally {
+            setActionLoading(prev => ({ ...prev, [idParam]: false }));
+        }
+    }
 
     async function handleAddAlergia() {
         if (!selectedAlergia || !alumnoId) return;
@@ -313,8 +411,12 @@ export default function FichaAlumno() {
                                 <p>{alumno.data.direccion}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
-                                <h5 className="me-2">Diagnóstico NE:</h5>
+                                <h5 className="me-2">Diagnóstico Necesidades Especiales:</h5>
                                 <p>{alumno.data.diagnostico_ne}</p>
+                            </div>
+                            <div className="mb-2 d-flex justify-content-start">
+                                <h5 className="me-2">Grupo Teoria: </h5>
+                                <p>{grupoNombre ?? alumno.data.grupo_teoria ?? '-'}</p>
                             </div>
                             <div className="mb-2 d-flex justify-content-start">
                                 <h5 className="me-2">Fecha de Ingreso a la Orquesta:</h5>
@@ -362,30 +464,113 @@ export default function FichaAlumno() {
 
             <div className="container mt-4">
                 <h3 className="text-center mb-3">Préstamos Instrumentos/Insumos</h3>
-                <table className="table table-bordered text-center">
-                    <thead className="table-primary">
-                        <tr>
-                            <th>Item</th>
-                            <th>Fecha de Inicio</th>
-                            <th>Fecha de Devolución</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><Link to="/DetalleInstrumento">Violin</Link></td>
-                            <td>01-03-2025</td>
-                            <td>15-05-2025</td>
-                            <td>En uso</td>
-                        </tr>
-                        <tr>
-                            <td><Link to="/DetalleInsumo">Pecastilla</Link></td>
-                            <td>05-03-2025</td>
-                            <td>20-03-2025</td>
-                            <td>Atrasado</td>
-                        </tr>
-                    </tbody>
-                </table>
+                {loadingPrestamos ? (
+                    <p>Cargando préstamos...</p>
+                ) : (
+                    <>
+                        <h5>Instrumentos</h5>
+                        <table className="table table-bordered text-center mb-4">
+                            <thead className="table-primary">
+                                <tr>
+                                    <th>Instrumento</th>
+                                    <th>Fecha de Inicio</th>
+                                    <th>Fecha de Devolución</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {prestamosInstrumento.length === 0 ? (
+                                    <tr><td colSpan={5}>No hay préstamos de instrumento</td></tr>
+                                ) : (
+                                    prestamosInstrumento.map((p: any) => (
+                                        <tr key={p.cod_prestamo ?? `${p.cod_instrumento}-${p.id_usuario}`}>                                            
+                                            <td>
+                                                <Link to={`/Instrumentos/Detalle/${encodeURIComponent(String(p.instrumento?.cod_instrumento ?? p.cod_instrumento ?? ''))}`}>
+                                                    {p.instrumento?.nombre_instrumento ?? p.cod_instrumento}
+                                                </Link>
+                                            </td>
+                                            <td>{p.fecha_prestamo ?? '-'}</td>
+                                            <td>{p.fecha_devolucion ?? '-'}</td>
+                                            <td>
+                                                {(() => {
+                                                    const raw = (p.estado ?? '').toString();
+                                                    const key = raw.toLowerCase();
+                                                    let cls = 'secondary';
+                                                    if (key.includes('devuelto atrasado')) cls = 'warning';
+                                                    else if (key.includes('devuelto')) cls = 'success';
+                                                    else if (key.includes('atrasado')) cls = 'danger';
+                                                    else if (key.includes('pendiente')) cls = 'secondary';
+                                                    const textColor = cls === 'warning' ? 'text-dark' : 'text-white';
+                                                    return (
+                                                        <span className={`badge bg-${cls} ${textColor}`}>{raw || '-'}</span>
+                                                    );
+                                                })()}
+                                            </td>
+                                            <td>
+                                                <a className="btn btn-sm btn-secondary me-2" href={`/Prestamo/EditarInstrumento/${encodeURIComponent(String(p.cod_prestamo ?? p.cod))}`}>Editar</a>
+                                                <button className="btn btn-sm btn-success" disabled={Boolean(actionLoading[p.cod_prestamo ?? p.cod]) || String(p.estado ?? '').toLowerCase().includes('devuelto')} onClick={() => handleEntregarPrestamo(p, 'instrumento')}>
+                                                    {actionLoading[p.cod_prestamo ?? p.cod] ? '...' : 'Entregar'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+
+                        <h5>Insumos</h5>
+                        <table className="table table-bordered text-center">
+                            <thead className="table-primary">
+                                <tr>
+                                    <th>Insumo</th>
+                                    <th>Fecha de Inicio</th>
+                                    <th>Fecha de Devolución</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {prestamosInsumo.length === 0 ? (
+                                    <tr><td colSpan={5}>No hay préstamos de insumo</td></tr>
+                                ) : (
+                                    prestamosInsumo.map((p: any) => (
+                                        <tr key={p.cod_prestamo ?? `${p.cod_insumo}-${p.id_usuario}`}>
+                                            <td>
+                                                <Link to={`/Insumos/Detalle/${encodeURIComponent(String(p.insumo?.cod_insumo ?? p.cod_insumo ?? ''))}`}>
+                                                    {p.insumo?.nombre_insumo ?? p.cod_insumo}
+                                                </Link>
+                                            </td>
+                                            <td>{p.fecha_prestamo ?? '-'}</td>
+                                            <td>{p.fecha_devolucion ?? '-'}</td>
+                                            <td>
+                                                {(() => {
+                                                    const raw = (p.estado ?? '').toString();
+                                                    const key = raw.toLowerCase();
+                                                    let cls = 'secondary';
+                                                    if (key.includes('devuelto atrasado')) cls = 'warning';
+                                                    else if (key.includes('devuelto')) cls = 'success';
+                                                    else if (key.includes('atrasado')) cls = 'danger';
+                                                    else if (key.includes('pendiente')) cls = 'secondary';
+                                                    const textColor = cls === 'warning' ? 'text-dark' : 'text-white';
+                                                    return (
+                                                        <span className={`badge bg-${cls} ${textColor}`}>{raw || '-'}</span>
+                                                    );
+                                                })()}
+                                            </td>
+                                            <td>
+                                                <a className="btn btn-sm btn-secondary me-2" href={`/Prestamo/EditarInsumo/${encodeURIComponent(String(p.cod_prestamo ?? p.cod))}`}>Editar</a>
+                                                <button className="btn btn-sm btn-success" disabled={Boolean(actionLoading[p.cod_prestamo ?? p.cod]) || String(p.estado ?? '').toLowerCase().includes('devuelto')} onClick={() => handleEntregarPrestamo(p, 'insumo')}>
+                                                    {actionLoading[p.cod_prestamo ?? p.cod] ? '...' : 'Entregar'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </>
+                )}
             </div>
             <div className="container mt-4">
                 <h3 className="text-center mb-3">Alergias</h3>

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLoaderData, Link, useNavigate } from 'react-router-dom';
 import type { ListaApoderado } from '../../types/apoderado';
 import { getListaApoderados, eliminarApoderado } from '../../services/ApoderadoService';
+import axiosInstance from '../../services/axiosinstance';
 
 export async function loader() {
     const items = await getListaApoderados();
@@ -32,6 +33,35 @@ export default function ListaApoderados(){
 
     const items = useLoaderData() as ListaApoderado[];
     const valid = Array.isArray(items) ? items : [];
+    const [apoderadoHasKid, setApoderadoHasKid] = useState<Record<string | number, { hasKid: boolean; count: number }>>({});
+
+    // when apoderado list changes, check which apoderados have hijos and cache the result
+    useEffect(() => {
+        let mounted = true;
+        async function fetchHasKids() {
+            const ids = Array.from(new Set(valid.map(a => a.id_apoderado).filter(Boolean)));
+            if (ids.length === 0) {
+                if (mounted) setApoderadoHasKid({});
+                return;
+            }
+            const map: Record<string | number, { hasKid: boolean; count: number }> = {};
+            await Promise.all(ids.map(async (id) => {
+                try {
+                    const res = await axiosInstance.get(`/apoderados/${encodeURIComponent(String(id))}/tiene-hijo`);
+                    const data = res.data?.data ?? res.data ?? null;
+                    const hasKid = data?.hasKid ?? data?.has_kid ?? false;
+                    const count = Number(data?.count ?? 0) || 0;
+                    map[id] = { hasKid: Boolean(hasKid), count };
+                } catch (err) {
+                    console.warn('Could not fetch tiene-hijo for apoderado', id, err);
+                    map[id] = { hasKid: false, count: 0 };
+                }
+            }));
+            if (mounted) setApoderadoHasKid(map);
+        }
+        fetchHasKids();
+        return () => { mounted = false; };
+    }, [valid]);
 
     // determine active sort field and order
     let activeField: 'nombre' | 'rut' = 'nombre';
@@ -100,7 +130,7 @@ export default function ListaApoderados(){
                     </thead>
                     <tbody>
                         {sortedApoderados.map((it, idx) => (
-                            <tr key={it.id_apoderado ?? it.rut ?? `ap-${idx}`}>
+                        <tr key={it.id_apoderado ?? it.rut ?? `ap-${idx}`}>
                                 <td>{it.rut ?? '-'}</td>
                                 <td>{it.nombre}</td>
                                 <td>{it.telefono ?? '-'}</td>
@@ -108,7 +138,11 @@ export default function ListaApoderados(){
                                     <div className="d-flex gap-2">
                                         <Link to={`/Apoderados/Detalle/${it.id_apoderado}`} className="btn btn-sm btn-outline-primary">Ver</Link>
                                         <Link to={`/Apoderados/Editar/${it.id_apoderado}`} className="btn btn-sm btn-outline-secondary">Editar</Link>
-                                        <button className="btn btn-sm btn-danger" onClick={() => openModal(it.id_apoderado ?? '')}>Eliminar</button>
+                                        { (apoderadoHasKid[it.id_apoderado ?? '']?.hasKid) ? (
+                                            <button className="btn btn-sm btn-danger" disabled title="No se puede eliminar: tiene estudiantes asociados">Eliminar</button>
+                                        ) : (
+                                            <button className="btn btn-sm btn-danger" onClick={() => openModal(it.id_apoderado ?? '')}>Eliminar</button>
+                                        ) }
                                     </div>
                                 </td>
                             </tr>

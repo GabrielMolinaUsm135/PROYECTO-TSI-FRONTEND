@@ -4,6 +4,7 @@ import type { ListaInstrumento } from '../../types/instrumento';
 import { getInstrumento, asociarInsumoAInstrumento, getInsumosPorInstrumento, desasociarInsumoDeInstrumento } from '../../services/InstrumentoService';
 import { getListaInsumos } from '../../services/InsumoService';
 import type { ListaInsumo } from '../../types/insumo';
+import axiosInstance from '../../services/axiosinstance';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -31,12 +32,30 @@ export default function DetalleInstrumento() {
             // rels expected like [{ cod_instrumento, cod_insumo }, ...]
             const relatedCodes = new Set(rels.map((r: any) => String(r.cod_insumo)));
 
+            // fetch all instrumento_insumo relations to know which insumos are already linked to any instrument
+            let allRels: Array<any> = [];
+            try {
+                const resp = await axiosInstance.get('/instrumento_insumo');
+                allRels = resp.data?.data ?? resp.data ?? [];
+            } catch (e) {
+                // if endpoint not available, fall back to assuming only local relations
+                allRels = [];
+            }
+            const globallyAssociated = new Set(allRels.map((r: any) => String(r.cod_insumo)));
+
             // build related insumos with names by matching all list
             const insumoByCode = new Map(allArray.map(i => [i.cod_insumo, i] as [string, ListaInsumo]));
             const relatedList = Array.from(relatedCodes).map(code => insumoByCode.get(String(code)) ?? ({ cod_insumo: String(code), nombre_insumo: String(code) } as ListaInsumo));
 
-            // available = all - related
-            const avail = allArray.filter(i => !relatedCodes.has(i.cod_insumo));
+            // available = all - (globally associated except those associated to THIS instrument)
+            const avail = allArray.filter(i => {
+                const code = String(i.cod_insumo);
+                // allow insumos that are related to THIS instrument (they appear in relatedCodes)
+                if (relatedCodes.has(code)) return false; // already related, don't show in available
+                // if globally associated to another instrument, exclude
+                if (globallyAssociated.has(code)) return false;
+                return true;
+            });
 
             setAvailableInsumos(avail);
             if (avail.length > 0) setSelectedInsumo(avail[0].cod_insumo);

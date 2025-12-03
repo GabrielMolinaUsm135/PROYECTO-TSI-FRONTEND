@@ -56,7 +56,10 @@ export default function CrearUsuario() {
                      </div>
                      <div className="col-md-6 mb-3">
                         <label className="form-label">Teléfono</label>
-                        <input name="telefono" className="form-control" />
+                        <div className="input-group">
+                           <span className="input-group-text">+569</span>
+                           <input name="telefono" className="form-control" />
+                        </div>
                      </div>
                   </div>
 

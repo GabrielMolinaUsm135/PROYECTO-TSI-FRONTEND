@@ -36,12 +36,12 @@ export default function CrearProfesor() {
         }
 
         setLoading(true);
-        try {
+            try {
             const payload = {
                 nombre: form.nombre,
                 apellido_paterno: form.apellido_paterno,
                 apellido_materno: form.apellido_materno,
-                telefono: form.telefono,
+                telefono: (String(form.telefono ?? '').startsWith('+') ? form.telefono : `+569${form.telefono ?? ''}`),
                 direccion: form.direccion,
                 asignatura: form.asignatura,
                 rut: form.rut,
@@ -89,12 +89,15 @@ export default function CrearProfesor() {
 
                 <div className="row">
                     <div className="col-md-6 mb-3">
-                        <label className="form-label">RUT</label>
+                        <label className="form-label">RUT (Sin puntos con guion) - 00000000-0 </label>
                         <input name="rut" className="form-control" value={form.rut} onChange={handleChange} />
                     </div>
                     <div className="col-md-6 mb-3">
                         <label className="form-label">Teléfono</label>
-                        <input name="telefono" className="form-control" value={form.telefono} onChange={handleChange} />
+                        <div className="input-group">
+                            <span className="input-group-text">+569</span>
+                            <input name="telefono" className="form-control" value={form.telefono} onChange={handleChange} />
+                        </div>
                     </div>
                     <div className="col-md-6 mb-3">
                         <label className="form-label">Dirección</label>

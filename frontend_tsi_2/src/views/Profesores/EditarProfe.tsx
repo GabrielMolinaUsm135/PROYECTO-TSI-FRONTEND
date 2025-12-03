@@ -66,7 +66,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
         nombre: formEntries.nombre_profesor ?? formEntries.nombre ?? null,
         apellido_paterno: formEntries.apellido_paterno ?? null,
         apellido_materno: formEntries.apellido_materno ?? null,
-        telefono: formEntries.telefono_profesor ?? formEntries.telefono ?? null,
+        telefono: (function(){
+            const t = formEntries.telefono_profesor ?? formEntries.telefono ?? null;
+            if (!t) return null;
+            const s = String(t);
+            return s.startsWith('+') ? s : `+569${s}`;
+        })(),
         correo: formEntries.correo ?? null,
         direccion: formEntries.direccion ?? null,
         asignatura: formEntries.asignatura ?? null,
@@ -103,19 +108,15 @@ export default function EditarProfesor() {
                 <Form method="post" className="row">
                     <div className="col-md-6">
                         <div className="mb-3 bg-light p-3 rounded">
-                            <label htmlFor="rut_profesor" className="form-label">RUT Profesor: XX.XXX.XXX-X <span className="text-danger">*</span></label>
+                            <label htmlFor="rut_profesor" className="form-label">RUT (Sin puntos con guion) - 00000000-0  <span className="text-danger">*</span></label>
                             <input
                                 type="text"
                                 id="rut_profesor"
                                 name="rut_profesor"
                                 maxLength={12}
-                                required
-                                pattern="\d{2}\.\d{3}\.\d{3}-[\dkK]"
-                                title="El RUT debe tener el formato XX.XXX.XXX-X"
-                                className="form-control"
-                                readOnly
-                                defaultValue={profesorData.rut}
-                                style={{ backgroundColor: "#e9ecef" }}
+                                required                                                                
+                                className="form-control"                                
+                                defaultValue={profesorData.rut}                            
                             />
                         </div>
 
@@ -133,7 +134,11 @@ export default function EditarProfesor() {
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="telefono_profesor" className="form-label">Teléfono Profesor:</label>
-                            <input type="text" id="telefono_profesor" name="telefono_profesor" required className="form-control" defaultValue={profesorData.telefono} />
+                                <label htmlFor="telefono" className="form-label">Teléfono:</label>
+                                <div className="input-group">
+                                    <span className="input-group-text">+569</span>
+                                    <input type="text" id="telefono" name="telefono" required className="form-control" defaultValue={String(profesorData?.telefono ?? '').replace(/^\+569/, '')} />
+                                </div>
                         </div>
                     </div>
                     <div className="col-md-6">

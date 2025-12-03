@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { crearAlumno, existeRut } from '../../services/AlumnoService';
 import axiosInstance from '../../services/axiosinstance';
+import { getListaApoderados } from '../../services/ApoderadoService';
 
 export default function CrearAlumno() {
     const [form, setForm] = useState({
@@ -22,8 +23,10 @@ export default function CrearAlumno() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [apoderados, setApoderados] = useState<string[]>([]);
+    const [apoderados, setApoderados] = useState<Array<{id_apoderado?: number; rut?: string; nombre?: string}>>([]);
     const [apoderadosLoading, setApoderadosLoading] = useState(false);
+    const [grupos, setGrupos] = useState<Array<{id_grupo_teoria: number; nombre_grupo: string}>>([]);
+    const [gruposLoading, setGruposLoading] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         const { name, value } = e.target;
@@ -31,23 +34,57 @@ export default function CrearAlumno() {
     }
 
     useEffect(() => {
-        // fetch apoderados ruts for the select
+        // fetch apoderados list for the select (show rut + name)
         let mounted = true;
-        async function fetchRuts() {
+        async function fetchApoderados() {
             setApoderadosLoading(true);
             try {
-                const res = await axiosInstance.get('/apoderados/ruts');
-                const data = res.data?.data ?? res.data ?? [];
-                // data may be array of strings or objects { rut }
-                const ruts = (Array.isArray(data) ? data : []).map((it: any) => typeof it === 'string' ? it : it.rut ?? String(it));
-                if (mounted) setApoderados(ruts);
+                const list = await getListaApoderados();
+                const data = Array.isArray(list) ? list : [];
+                if (mounted) setApoderados(data.map((a: any) => ({ id_apoderado: a.id_apoderado ?? a.id, rut: a.rut, nombre: a.nombre })));
             } catch (err) {
-                console.warn('No se pudieron obtener los RUTs de apoderados', err);
+                console.warn('No se pudieron obtener los apoderados', err);
             } finally {
                 if (mounted) setApoderadosLoading(false);
             }
         }
-        fetchRuts();
+        fetchApoderados();
+        return () => { mounted = false; };
+    }, []);
+
+    // fetch grupos (try a few endpoints for compatibility)
+    useEffect(() => {
+        let mounted = true;
+        async function fetchGrupos() {
+            setGruposLoading(true);
+            try {
+                const tryEndpoints = ['/grupos', '/grupos/nombre', '/grupos/nombre/1'];
+                let data: any = null;
+                for (const ep of tryEndpoints) {
+                    try {
+                        const res = await axiosInstance.get(ep);
+                        data = res.data?.data ?? res.data ?? null;
+                        if (data) break;
+                    } catch (e) {
+                        // try next
+                    }
+                }
+                if (!data) {
+                    if (mounted) setGrupos([]);
+                    return;
+                }
+                // ensure array of { id_grupo_teoria, nombre_grupo }
+                const arr = Array.isArray(data) ? data : (data.items ?? []);
+                const normalized = arr.map((g: any) => ({ id_grupo_teoria: Number(g.id_grupo_teoria ?? g.id ?? g.id_grupo ?? 0), nombre_grupo: g.nombre_grupo ?? g.nombre ?? String(g) }));
+                if (mounted) setGrupos(normalized);
+            } catch (err) {
+                console.warn('Could not fetch grupos list', err);
+                if (mounted) setGrupos([]);
+            } finally {
+                if (mounted) setGruposLoading(false);
+            }
+        }
+        fetchGrupos();
         return () => { mounted = false; };
     }, []);
 
@@ -106,6 +143,8 @@ export default function CrearAlumno() {
                 id_rol: 3,
             };
 
+            // ensure telefono has +569 prefix
+            if (payload.telefono && !String(payload.telefono).startsWith('+')) payload.telefono = `+569${payload.telefono}`;
             const res = await crearAlumno(payload);
             if (res.success) {
                 setMessage('Alumno creado correctamente.');
@@ -130,20 +169,31 @@ export default function CrearAlumno() {
             <form onSubmit={handleSubmit}>
                 <div className="row">
                     <div className="col-md-4 mb-3">
-                        <label className="form-label">Apoderado (RUT) (opcional)</label>
+                        <label className="form-label">RUT apoderado (Sin puntos con guión) - 0000000-0</label>
                         <select name="apoderado_rut" className="form-select" value={form.apoderado_rut} onChange={handleChange}>
                             <option value="">-- Ninguno --</option>
                             {apoderadosLoading ? (
                                 <option disabled>Loading...</option>
                             ) : (
-                                apoderados.map(r => <option key={r} value={r}>{r}</option>)
+                                apoderados.map(a => (
+                                    <option key={a.rut ?? a.id_apoderado} value={a.rut ?? ''}>{`${a.rut ?? ''}${a.nombre ? ' - ' + a.nombre : ''}`}</option>
+                                ))
                             )}
                         </select>
                     </div>
 
                     <div className="col-md-4 mb-3">
-                        <label className="form-label">Grupo teoría (id)</label>
-                        <input name="id_grupo_teoria" type="number" className="form-control" value={form.id_grupo_teoria} onChange={handleChange} />
+                        <label className="form-label">Grupo teoría</label>
+                        <select name="id_grupo_teoria" className="form-select" value={form.id_grupo_teoria} onChange={handleChange}>
+                            <option value="">-- Seleccione grupo --</option>
+                            {gruposLoading ? (
+                                <option disabled>Cargando...</option>
+                            ) : (
+                                grupos.map(g => (
+                                    <option key={g.id_grupo_teoria} value={g.id_grupo_teoria}>{g.nombre_grupo}</option>
+                                ))
+                            )}
+                        </select>
                     </div>
 
                     <div className="col-md-4 mb-3">
@@ -154,7 +204,7 @@ export default function CrearAlumno() {
 
                 <div className="row">
                     <div className="col-md-4 mb-3">
-                        <label className="form-label">RUT (Sin puntos con guion)</label>
+                        <label className="form-label">RUT (Sin puntos con guion) - 00000000-0</label>
                         <input name="rut" className="form-control" value={form.rut} onChange={handleChange} placeholder="12345678-9" required />
                     </div>
                     <div className="col-md-4 mb-3">
@@ -174,7 +224,10 @@ export default function CrearAlumno() {
                 <div className="row">
                     <div className="col-md-6 mb-3">
                         <label className="form-label">Teléfono</label>
-                        <input name="telefono" className="form-control" value={form.telefono} onChange={handleChange} />
+                        <div className="input-group">
+                            <span className="input-group-text">+569</span>
+                            <input name="telefono" className="form-control" value={form.telefono} onChange={handleChange} />
+                        </div>
                     </div>
                     <div className="col-md-6 mb-3">
                         <label className="form-label">Dirección</label>

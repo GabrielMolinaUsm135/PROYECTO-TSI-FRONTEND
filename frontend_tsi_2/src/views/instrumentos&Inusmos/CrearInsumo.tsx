@@ -15,14 +15,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
         // If check returned falsy data, proceed to create
         const { data } = await axiosInstance.post('/insumos', FormData, { headers: { 'Content-Type': 'application/json' } });
-        if (data) return redirect('/Insumos/ListaInsumos');
+        if (data) return redirect('/ListaInsumos');
         return { error: "cod_insumo no valido." };
     } catch (error) {
         // If GET returned 404, create the instrument
         if (axios.isAxiosError(error) && error.response?.status === 404) {
             try {
                 const { data } = await axiosInstance.post('/insumos', FormData, { headers: { 'Content-Type': 'application/json' } });
-                if (data) return redirect('/Insumos/ListaInsumos');
+                if (data) return redirect('/ListaInsumos');
                 return { error: "cod_insumo no valido, ya existe este insumo." };
             } catch (createError) {
                 console.error("Error creating insumo:", createError);

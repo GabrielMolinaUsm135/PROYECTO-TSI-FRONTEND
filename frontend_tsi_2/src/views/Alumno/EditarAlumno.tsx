@@ -3,6 +3,11 @@ import { useState, useEffect } from "react";
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs, useLoaderData, Form } from "react-router-dom";
 import axiosInstance from '../../services/axiosinstance';
 
+// helper to normalize group id fields
+function getGrupoIdFromAlumno(alumnoData: any) {
+    return alumnoData?.id_grupo_teoria ?? alumnoData?.id_grupo ?? alumnoData?.grupo_teoria ?? '';
+}
+
 export async function loader({ params }: LoaderFunctionArgs) {
     const { rut } = params;
     if (!rut) {
@@ -40,22 +45,51 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
     const FormData = Object.fromEntries(await request.formData()) as Record<string, any>;
     try {
-        // If a rut_apoderado was selected, resolve it to id_apoderado using the endpoint
+        // Resolve id_apoderado from rut_apoderado if provided
+        let resolved_id_apoderado: number | null = null;
         if (FormData.rut_apoderado) {
             try {
                 const res = await axiosInstance.get(`/apoderados/rut/${encodeURIComponent(String(FormData.rut_apoderado))}`);
                 const apodata = res.data?.data ?? res.data ?? null;
-                FormData.id_apoderado = apodata?.id_apoderado ?? apodata?.id ?? null;
+                resolved_id_apoderado = apodata?.id_apoderado ?? apodata?.id ?? null;
             } catch (err) {
                 console.warn('Could not resolve apoderado by rut:', err);
-                // proceed without id_apoderado (backend can accept rut_apoderado)
-                FormData.id_apoderado = FormData.id_apoderado ?? null;
+                resolved_id_apoderado = FormData.id_apoderado ?? null;
             }
+        } else {
+            resolved_id_apoderado = FormData.id_apoderado ?? null;
         }
 
-        // Use axiosInstance (baseURL + token interceptor)
-        await axiosInstance.put(`/alumno/${encodeURIComponent(String(rut))}`, FormData, { headers: { 'Content-Type': 'application/json' } });
-        return redirect('/Alumno/ListaAlumnos'); // Redirect after successful update
+        // coerce id_grupo_teoria
+        let grupoId: number | null = null;
+        if (FormData.id_grupo_teoria !== undefined && FormData.id_grupo_teoria !== '') {
+            grupoId = Number(FormData.id_grupo_teoria) || null;
+        }
+
+        // Build normalized payload with all relevant fields
+        const payload: Record<string, any> = {
+            rut: FormData.rut_alumno ?? FormData.rut ?? null,
+            rut_alumno: FormData.rut_alumno ?? FormData.rut ?? null,
+            rut_apoderado: FormData.rut_apoderado ?? null,
+            id_apoderado: resolved_id_apoderado,
+            id_grupo_teoria: grupoId,
+            nombre: FormData.nombre_alumno ?? FormData.nombre ?? null,
+            apellido_paterno: FormData.apellido_paterno ?? FormData.apellidoPaterno ?? null,
+            apellido_materno: FormData.apellido_materno ?? FormData.apellidoMaterno ?? null,
+            telefono: (function(){
+                const t = FormData.telefono_alumno ?? FormData.telefono ?? null;
+                if (!t) return null;
+                const s = String(t);
+                return s.startsWith('+') ? s : `+569${s}`;
+            })(),
+            direccion: FormData.direccion_alumno ?? FormData.direccion ?? null,
+            diagnostico_ne: FormData.diagnostico_ne ?? FormData.diagnosticoNe ?? null,
+            correo: FormData.correo_alumno ?? FormData.correo ?? null,
+            fecha_ingreso: FormData.fecha_ingreso ?? null,
+        };
+
+        await axiosInstance.put(`/alumno/${encodeURIComponent(String(rut))}`, payload, { headers: { 'Content-Type': 'application/json' } });
+        return redirect('/Alumno/ListaAlumnos');
     } catch (error) {
         console.error("Error updating alumno:", error);
         return new Response("Failed to update alumno", { status: 500 });
@@ -79,20 +113,57 @@ export default function EditarAlumno() {
     
 
     const [rutApoderados, setRutApoderados] = useState<string[]>([]);
+    const [grupos, setGrupos] = useState<Array<{id_grupo_teoria: number; nombre_grupo: string}>>([]);
+    const [gruposLoading, setGruposLoading] = useState(false);
 
     useEffect(() => {
         let mounted = true;
-        async function loadRuts() {
+        async function loadApoderados() {
             try {
-                const res = await axiosInstance.get('/apoderados/ruts');
-                const data = res.data?.data ?? res.data ?? [];
-                const ruts = (Array.isArray(data) ? data : []).map((it: any) => (typeof it === 'string' ? it : it.rut ?? String(it)));
-                if (mounted) setRutApoderados(ruts);
+                const list = await (await import('../../services/ApoderadoService')).getListaApoderados();
+                const data = Array.isArray(list) ? list : [];
+                if (mounted) setRutApoderados(data.map((a: any) => `${a.rut ?? ''}${a.nombre ? ' - ' + a.nombre : ''}`));
             } catch (err) {
-                console.warn('Could not fetch apoderados ruts', err);
+                console.warn('Could not fetch apoderados list', err);
             }
         }
-        loadRuts();
+        loadApoderados();
+        return () => { mounted = false; };
+    }, []);
+
+    // fetch grupos for the select
+    useEffect(() => {
+        let mounted = true;
+        async function loadGrupos() {
+            setGruposLoading(true);
+            try {
+                // prefer listado endpoint; fall back to nombre endpoint
+                const tryEndpoints = ['/grupos', '/grupos/nombre'];
+                let data: any = null;
+                for (const ep of tryEndpoints) {
+                    try {
+                        const res = await axiosInstance.get(ep);
+                        data = res.data?.data ?? res.data ?? null;
+                        if (data) break;
+                    } catch (e) {
+                        // continue
+                    }
+                }
+                if (!data) {
+                    if (mounted) setGrupos([]);
+                    return;
+                }
+                const arr = Array.isArray(data) ? data : (data.items ?? []);
+                const normalized = arr.map((g: any) => ({ id_grupo_teoria: Number(g.id_grupo_teoria ?? g.id ?? 0), nombre_grupo: g.nombre_grupo ?? g.nombre ?? String(g) }));
+                if (mounted) setGrupos(normalized);
+            } catch (err) {
+                console.warn('Could not fetch grupos', err);
+                if (mounted) setGrupos([]);
+            } finally {
+                if (mounted) setGruposLoading(false);
+            }
+        }
+        loadGrupos();
         return () => { mounted = false; };
     }, []);
 
@@ -107,19 +178,16 @@ export default function EditarAlumno() {
                 <Form method="post" className="row">
                     <div className="col-md-6">
                         <div className="mb-3 bg-light p-3 rounded">
-                            <label htmlFor="rut_alumno" className="form-label">RUT Alumno: XX.XXX.XXX-X <span className="text-danger">*</span></label>
+                            <label htmlFor="rut_alumno" className="form-label">RUT (Sin puntos con guion) - 00000000-0 <span className="text-danger">*</span></label>
                             <input 
                                 type="text" 
                                 id="rut_alumno" 
                                 name="rut_alumno" 
-                                maxLength={12} 
-                                required 
-                                pattern="\d{2}\.\d{3}\.\d{3}-[\dkK]" 
-                                title="El RUT debe tener el formato XX.XXX.XXX-X" 
+                                maxLength={10} 
+                                required                                 
+                                title="El RUT (SIN PUNTOS Y CON GUION)" 
                                 className="form-control" 
-                                readOnly 
-                                defaultValue={rutAlumno}
-                                style={{ backgroundColor: "#e9ecef" }}
+                                defaultValue={rutAlumno}                                
                             />
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
@@ -129,6 +197,19 @@ export default function EditarAlumno() {
                                 {rutApoderados.map((rut, index) => (
                                     <option key={index} value={rut}>{rut}</option>
                                 ))}
+                            </select>
+                        </div>
+                        <div className="mb-3 bg-light p-3 rounded">
+                            <label htmlFor="id_grupo_teoria" className="form-label">Grupo Teoría:</label>
+                            <select id="id_grupo_teoria" name="id_grupo_teoria" className="form-select" defaultValue={getGrupoIdFromAlumno(alumnoData)}>
+                                <option value="">-- Seleccione grupo --</option>
+                                {gruposLoading ? (
+                                    <option disabled>Cargando...</option>
+                                ) : (
+                                    grupos.map(g => (
+                                        <option key={g.id_grupo_teoria} value={g.id_grupo_teoria}>{g.nombre_grupo}</option>
+                                    ))
+                                )}
                             </select>
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
@@ -145,7 +226,10 @@ export default function EditarAlumno() {
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
                             <label htmlFor="telefono_alumno" className="form-label">Teléfono Alumno:</label>
-                            <input type="text" id="telefono_alumno" name="telefono_alumno" required className="form-control" defaultValue={telefonoAlumno} />
+                            <div className="input-group">
+                                <span className="input-group-text">+569</span>
+                                <input type="text" id="telefono_alumno" name="telefono_alumno" required className="form-control" defaultValue={String(telefonoAlumno ?? '').replace(/^\+569/, '')} />
+                            </div>
                         </div>
                     </div>
                     <div className="col-md-6">
@@ -185,7 +269,7 @@ export default function EditarAlumno() {
                             />
                         </div>
                         <div className="mb-3 bg-light p-3 rounded">
-                            <label htmlFor="diagnostico_ne" className="form-label">Diagnóstico NE:</label>
+                            <label htmlFor="diagnostico_ne" className="form-label">Diagnóstico Necesidades Especiales:</label>
                             <textarea id="diagnostico_ne" name="diagnostico_ne" maxLength={100} className="form-control" style={{ height: "275px" }} defaultValue={diagnosticoNe}></textarea>
                         </div>
                     </div>
