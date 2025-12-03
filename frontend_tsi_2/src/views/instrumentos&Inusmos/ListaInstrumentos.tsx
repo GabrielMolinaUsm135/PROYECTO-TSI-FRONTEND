@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLoaderData, useNavigate, Link } from 'react-router-dom';
-import { getListaInstrumentos, instrumentoEliminar } from '../../services/InstrumentoService';
+import { getListaInstrumentos, instrumentoEliminar, getInsumosPorInstrumento, desasociarInsumoDeInstrumento } from '../../services/InstrumentoService';
 import type { ListaInstrumento } from '../../types/instrumento';
 
 export async function loader() {
@@ -28,6 +28,21 @@ export default function ListaInstrumentos() {
 
     const handleDelete = async () => {
         if (!selectedCod) return;
+        try {
+            const relaciones = await getInsumosPorInstrumento(selectedCod);
+            if (Array.isArray(relaciones) && relaciones.length > 0) {
+                for (const rel of relaciones) {
+                    const codInsumo = (rel as any).cod_insumo ?? (rel as any).insumo_cod ?? (rel as any).codInsumo;
+                    if (!codInsumo) continue;
+                    const unlinkRes = await desasociarInsumoDeInstrumento(selectedCod, codInsumo);
+                    if (!unlinkRes.success) {
+                        console.warn('No se pudo desasociar insumo', codInsumo, 'del instrumento', selectedCod, unlinkRes.error);
+                    }
+                }
+            }
+        } catch (err:any) {
+            console.error('Error al desasociar insumos antes de eliminar:', err);
+        }
         const res = await instrumentoEliminar(selectedCod);
         if (!res.success) {
             alert('Error al eliminar instrumento: ' + (typeof res.error === 'string' ? res.error : JSON.stringify(res.error)));
