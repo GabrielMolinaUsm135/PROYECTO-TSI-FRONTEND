@@ -1,6 +1,7 @@
 import { safeParse } from "valibot";
 import { LoginFormSchema, UsuarioFormSchema } from "../types/usuario";
 import axios from "axios";
+import axiosInstance from "./axiosinstance";
 
 type UsuarioFormData = {
    [k: string]: FormDataEntryValue
@@ -85,5 +86,15 @@ export async function crearUsuario(formData: UsuarioFormData) {
     }catch (error:any){
         console.error('Error in crearUsuario:', error);
         return { success: false, error: error.response?.data?.error ?? error.message ?? 'unexpected error' };
+    }
+}
+
+export async function getListausuarios() {
+    try {
+        const res = await axiosInstance.get('/usuarios');
+        return res.data?.data ?? res.data ?? [];
+    } catch (error) {
+        console.error('getListaUsuarios error', error);
+        return [];
     }
 }

@@ -1,4 +1,4 @@
-import { nonEmpty, number, object, pipe, string } from "valibot";
+import { array, nonEmpty, number, object, pipe, string, type InferOutput } from "valibot";
 
 export const LoginFormSchema = object({
     correo: pipe(string(), nonEmpty('Indique su correo')),
@@ -10,3 +10,11 @@ export const UsuarioFormSchema = object({
     password: string(),
     id_rol: number(),
 });
+
+export const listausuarioSchema = object({
+    correo: string(),
+    id_rol: number(),
+});
+
+export const ListaUsuariosSchema = array(listausuarioSchema);
+export type ListaUsuario = InferOutput<typeof listausuarioSchema>;
