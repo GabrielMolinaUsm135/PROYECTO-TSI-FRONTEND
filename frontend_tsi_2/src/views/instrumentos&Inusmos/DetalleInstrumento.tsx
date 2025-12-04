@@ -1,10 +1,11 @@
 import { useLoaderData, Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ListaInstrumento } from '../../types/instrumento';
 import { getInstrumento, asociarInsumoAInstrumento, getInsumosPorInstrumento, desasociarInsumoDeInstrumento } from '../../services/InstrumentoService';
 import { getListaInsumos } from '../../services/InsumoService';
 import type { ListaInsumo } from '../../types/insumo';
 import axiosInstance from '../../services/axiosinstance';
+import { crearImagenInstrumento, getImagenInstrumentoTrPorCod } from '../../services/ImagenService';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -20,6 +21,10 @@ export default function DetalleInstrumento() {
     const [selectedInsumo, setSelectedInsumo] = useState<string | null>(null);
     const [adding, setAdding] = useState(false);
     const [relatedInsumos, setRelatedInsumos] = useState<ListaInsumo[]>([]);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const prevObjectUrlRef = useRef<string | null>(null);
+    const [previewSrc, setPreviewSrc] = useState<string>('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         async function load() {
@@ -65,6 +70,40 @@ export default function DetalleInstrumento() {
         }
         load();
     }, [instrumento]);
+
+    // load existing image from imagenesTru for this instrumento (if any)
+    useEffect(() => {
+        let mounted = true;
+        async function loadImagenTr() {
+            const cod = instrumento?.cod_instrumento ?? null;
+            if (!cod) return;
+            try {
+                const payload = await getImagenInstrumentoTrPorCod(cod);
+                if (!mounted || !payload) return;
+
+                const pickFirst = (p: any) => Array.isArray(p) && p.length > 0 ? p[0] : p;
+                let item = pickFirst(payload);
+                if (item && item.data) item = pickFirst(item.data);
+
+                const mime = item?.mimeType ?? item?.mime ?? 'image/jpeg';
+                const b64 = item?.imagenBase64 ?? item?.imagentr ?? item?.imagenInst ?? item?.imageBase64 ?? item?.imagen ?? item?.imagenB ?? null;
+                if (typeof b64 === 'string' && b64.length > 0) {
+                    setPreviewSrc(`data:${mime};base64,${b64}`);
+                    return;
+                }
+
+                const url = item?.url ?? item?.imagen_url ?? null;
+                if (typeof url === 'string' && url.length > 0) {
+                    setPreviewSrc(url);
+                    return;
+                }
+            } catch (err) {
+                // ignore
+            }
+        }
+        loadImagenTr();
+        return () => { mounted = false; };
+    }, [instrumento?.cod_instrumento]);
 
     const handleAddInsumo = async () => {
         if (!selectedInsumo) {
@@ -134,14 +173,67 @@ export default function DetalleInstrumento() {
                         </div>
 
                         <div className="col-md-5">
-                            <div className="text-center mb-3">
-                                <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png"
-                                    alt={instrumento.nombre_instrumento ?? 'Instrumento'}
-                                    className="img-fluid rounded"
-                                    style={{ maxHeight: 300, objectFit: 'contain' }}
-                                />
-                            </div>
+                                <div className="text-center mb-3">
+                                    <img
+                                        src={previewSrc}
+                                        alt={instrumento.nombre_instrumento ?? 'Instrumento'}
+                                        className="img-fluid rounded"
+                                        style={{ maxHeight: 300, objectFit: 'contain' }}
+                                    />
+                                    <div className="mt-2">
+                                        <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} aria-label="Añadir imagen">{uploadingImage ? 'Cargando...' : 'Añadir imagen'}</button>
+                                    </div>
+
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            if (prevObjectUrlRef.current) {
+                                                try { URL.revokeObjectURL(prevObjectUrlRef.current); } catch (err) { /* ignore */ }
+                                                prevObjectUrlRef.current = null;
+                                            }
+                                            const objUrl = URL.createObjectURL(file);
+                                            prevObjectUrlRef.current = objUrl;
+                                            setPreviewSrc(objUrl);
+
+                                            try {
+                                                setUploadingImage(true);
+                                                const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+                                                    const reader = new FileReader();
+                                                    reader.onload = () => resolve(String(reader.result));
+                                                    reader.onerror = () => reject(new Error('FileReader error'));
+                                                    reader.readAsDataURL(file);
+                                                });
+
+                                                const dataUrl = await toDataUrl(file);
+                                                const base64 = dataUrl.split(',')[1] ?? dataUrl;
+                                                const payload: Record<string, any> = { imagentr: base64, imagenDataUrl: dataUrl };
+                                                if (instrumento?.cod_instrumento) payload.cod_instrumento = instrumento.cod_instrumento;
+
+                                                const res = await crearImagenInstrumento(payload as any);
+                                                console.log('Upload response', res);
+                                                if (res?.success) {
+                                                    const returned = res.data?.data ?? res.data ?? res;
+                                                    const url = returned?.url ?? returned?.data?.url ?? returned?.imagen_url ?? null;
+                                                    if (url) setPreviewSrc(url);
+                                                    alert('Imagen subida correctamente.');
+                                                } else {
+                                                    console.error('Error subiendo imagen:', res?.error ?? res);
+                                                    alert('Error subiendo imagen. Revisa la consola.');
+                                                }
+                                            } catch (err) {
+                                                console.error('Error subiendo imagen', err);
+                                                alert('Error subiendo imagen. Revisa la consola.');
+                                            } finally {
+                                                setUploadingImage(false);
+                                            }
+                                        }}
+                                    />
+                                </div>
 
                             <div className="card mt-3">
                                 <div className="card-body">
