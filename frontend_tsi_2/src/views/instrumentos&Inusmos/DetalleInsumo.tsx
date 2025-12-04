@@ -21,6 +21,7 @@ export default function DetalleInsumo(){
     const prevObjectUrlRef = useRef<string | null>(null);
     const [previewSrc, setPreviewSrc] = useState<string>('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [hasImageLinked, setHasImageLinked] = useState<boolean>(false);
 
     useEffect(() => {
         async function loadRelated() {
@@ -86,6 +87,7 @@ export default function DetalleInsumo(){
                         prevObjectUrlRef.current = null;
                     }
                     setPreviewSrc(`data:${mime};base64,${b64}`);
+                    setHasImageLinked(true);
                     return;
                 }
 
@@ -100,6 +102,7 @@ export default function DetalleInsumo(){
                 const url = urlCandidates.find((v: any) => typeof v === 'string' && v.length > 0) ?? null;
                 if (url) {
                     setPreviewSrc(url);
+                    setHasImageLinked(true);
                     return;
                 }
             } catch (err) {
@@ -154,16 +157,17 @@ export default function DetalleInsumo(){
                                 <img src={previewSrc}
                                     alt={insumo.nombre_insumo ?? 'Insumo'} className="img-fluid rounded" style={{ maxHeight: 300, objectFit: 'contain' }} />
                                 <div className="mt-2 d-flex justify-content-center gap-2">
-                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage || hasImageLinked}>
                                         {uploadingImage ? 'Cargando...' : 'Añadir imagen'}
                                     </button>
-                                    <button type="button" className="btn btn-outline-danger btn-sm" onClick={async () => {
+                                    <button type="button" className="btn btn-outline-danger btn-sm" disabled={!hasImageLinked} onClick={async () => {
                                         if (!insumo?.cod_insumo) return alert('Insumo sin codigo');
                                         if (!confirm('¿Eliminar la imagen asociada a este insumo?')) return;
                                         try {
                                             const res = await ImagenEliminarInsumos(insumo.cod_insumo);
                                             if (res?.success) {
                                                 setPreviewSrc('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
+                                                setHasImageLinked(false);
                                                 alert('Imagen eliminada.');
                                             } else {
                                                 console.error('Error eliminando imagen:', res?.error ?? res);
@@ -213,6 +217,7 @@ export default function DetalleInsumo(){
                                                 const url = returned?.url ?? returned?.data?.url ?? returned?.imagen_url ?? null;
                                                 if (url) setPreviewSrc(url);
                                                 alert('Imagen subida correctamente.');
+                                                    setHasImageLinked(true);
                                             } else {
                                                 console.error('Error subiendo imagen:', res?.error ?? res);
                                                 alert('Error subiendo imagen. Revisa la consola.');

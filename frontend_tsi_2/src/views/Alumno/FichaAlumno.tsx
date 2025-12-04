@@ -109,6 +109,7 @@ export default function FichaAlumno() {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const prevObjectUrlRef = useRef<string | null>(null);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [hasImageLinked, setHasImageLinked] = useState<boolean>(Boolean(alumno?.data?.foto ?? alumno?.data?.foto_url));
     const [grupoNombre, setGrupoNombre] = useState<string | null>(null);
     const [prestamosInstrumento, setPrestamosInstrumento] = useState<any[]>([]);
     const [prestamosInsumo, setPrestamosInsumo] = useState<any[]>([]);
@@ -247,6 +248,7 @@ export default function FichaAlumno() {
                         prevObjectUrlRef.current = null;
                     }
                     setImageSrc(`data:${mime};base64,${b64}`);
+                    setHasImageLinked(true);
                     return;
                 }
 
@@ -254,6 +256,7 @@ export default function FichaAlumno() {
                 const url = payload.url ?? payload.imagen_url ?? null;
                 if (typeof url === 'string' && url.length > 0) {
                     setImageSrc(url);
+                    setHasImageLinked(true);
                     return;
                 }
             } catch (err) {
@@ -419,10 +422,10 @@ export default function FichaAlumno() {
                                 style={{ maxHeight: 220, objectFit: 'cover' }}
                             />
                             <div className="mt-2 d-flex gap-2">
-                                <button type="button" className="btn btn-sm btn-primary" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                                <button type="button" className="btn btn-sm btn-primary" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage || hasImageLinked}>
                                     {uploadingImage ? 'Cargando...' : 'Insertar imagen'}
                                 </button>
-                                <button type="button" className="btn btn-sm btn-outline-danger" onClick={async () => {
+                                <button type="button" className="btn btn-sm btn-outline-danger" disabled={!hasImageLinked} onClick={async () => {
                                     const idUsuario = alumno?.data?.id_usuario ?? alumno?.data?.id_user ?? alumno?.id_user ?? alumno?.id_usuario ?? null;
                                     if (!idUsuario) return alert('No hay usuario asociado a este alumno');
                                     if (!confirm('¿Eliminar la imagen asociada a este alumno?')) return;
@@ -430,6 +433,7 @@ export default function FichaAlumno() {
                                         const res = await ImagenEliminar(idUsuario);
                                         if (res?.success) {
                                             setImageSrc('https://t4.ftcdn.net/jpg/05/42/36/11/360_F_542361185_VFRJWpR2FH5OiAEVveWO7oZnfSccZfD3.jpg');
+                                            setHasImageLinked(false);
                                             alert('Imagen eliminada.');
                                         } else {
                                             console.error('Error eliminando imagen:', res?.error ?? res);
@@ -485,6 +489,7 @@ export default function FichaAlumno() {
                                             const returned = res.data?.data ?? res.data ?? res;
                                             const url = returned?.url ?? returned?.data?.url ?? returned?.imagen_url ?? null;
                                             if (url) setImageSrc(url);
+                                            setHasImageLinked(true);
                                         } else {
                                             console.error('Error subiendo imagen:', res?.error ?? res);
                                             alert('Error subiendo imagen. Revisa la consola.');

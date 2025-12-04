@@ -25,6 +25,7 @@ export default function DetalleInstrumento() {
     const prevObjectUrlRef = useRef<string | null>(null);
     const [previewSrc, setPreviewSrc] = useState<string>('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [hasImageLinked, setHasImageLinked] = useState<boolean>(false);
 
     useEffect(() => {
         async function load() {
@@ -89,12 +90,14 @@ export default function DetalleInstrumento() {
                 const b64 = item?.imagenBase64 ?? item?.imagentr ?? item?.imagenInst ?? item?.imageBase64 ?? item?.imagen ?? item?.imagenB ?? null;
                 if (typeof b64 === 'string' && b64.length > 0) {
                     setPreviewSrc(`data:${mime};base64,${b64}`);
+                    setHasImageLinked(true);
                     return;
                 }
 
                 const url = item?.url ?? item?.imagen_url ?? null;
                 if (typeof url === 'string' && url.length > 0) {
                     setPreviewSrc(url);
+                    setHasImageLinked(true);
                     return;
                 }
             } catch (err) {
@@ -181,14 +184,15 @@ export default function DetalleInstrumento() {
                                         style={{ maxHeight: 300, objectFit: 'contain' }}
                                     />
                                     <div className="mt-2 d-flex justify-content-center gap-2">
-                                        <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} aria-label="Añadir imagen">{uploadingImage ? 'Cargando...' : 'Añadir imagen'}</button>
-                                        <button type="button" className="btn btn-outline-danger btn-sm" onClick={async () => {
+                                        <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage || hasImageLinked} aria-label="Añadir imagen">{uploadingImage ? 'Cargando...' : 'Añadir imagen'}</button>
+                                        <button type="button" className="btn btn-outline-danger btn-sm" disabled={!hasImageLinked} onClick={async () => {
                                             if (!instrumento?.cod_instrumento) return alert('Instrumento sin codigo');
                                             if (!confirm('¿Eliminar la imagen asociada a este instrumento?')) return;
                                             try {
                                                 const res = await eliminarImagenInstrumentoPorCod(instrumento.cod_instrumento);
                                                 if (res?.success) {
                                                     setPreviewSrc('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
+                                                    setHasImageLinked(false);
                                                     alert('Imagen eliminada.');
                                                 } else {
                                                     console.error('Error eliminando imagen:', res?.error ?? res);
@@ -238,6 +242,7 @@ export default function DetalleInstrumento() {
                                                     const url = returned?.url ?? returned?.data?.url ?? returned?.imagen_url ?? null;
                                                     if (url) setPreviewSrc(url);
                                                     alert('Imagen subida correctamente.');
+                                                    setHasImageLinked(true);
                                                 } else {
                                                     console.error('Error subiendo imagen:', res?.error ?? res);
                                                     alert('Error subiendo imagen. Revisa la consola.');
