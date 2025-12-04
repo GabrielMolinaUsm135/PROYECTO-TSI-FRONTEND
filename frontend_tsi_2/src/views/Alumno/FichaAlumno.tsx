@@ -226,6 +226,45 @@ export default function FichaAlumno() {
         };
     }, []);
 
+    // If the alumno has an associated id_usuario, try to fetch an existing image
+    useEffect(() => {
+        let mounted = true;
+        async function loadImageForUsuario() {
+            const idUsuario = alumno?.data?.id_usuario ?? alumno?.data?.id_user ?? null;
+            if (!idUsuario) return;
+            try {
+                const res = await axiosInstance.get(`/imagenes/${encodeURIComponent(String(idUsuario))}`);
+                const payload = res.data?.data ?? res.data ?? null;
+                if (!mounted || !payload) return;
+
+                // accept several possible keys returned by backend
+                const b64 = payload.imageBase64 ?? payload.imagenBase64 ?? payload.imagenB ?? null;
+                const mime = payload.mimeType ?? payload.mime ?? 'image/jpeg';
+                if (typeof b64 === 'string' && b64.length > 0) {
+                    // revoke previous object URL if any
+                    if (prevObjectUrlRef.current) {
+                        try { URL.revokeObjectURL(prevObjectUrlRef.current); } catch (e) { /* ignore */ }
+                        prevObjectUrlRef.current = null;
+                    }
+                    setImageSrc(`data:${mime};base64,${b64}`);
+                    return;
+                }
+
+                // if backend returned a URL
+                const url = payload.url ?? payload.imagen_url ?? null;
+                if (typeof url === 'string' && url.length > 0) {
+                    setImageSrc(url);
+                    return;
+                }
+            } catch (err) {
+                // ignore — keep current imageSrc
+                console.warn('No existing image for usuario or fetch failed', err);
+            }
+        }
+        loadImageForUsuario();
+        return () => { mounted = false; };
+    }, [alumno?.data?.id_usuario]);
+
     async function handleEntregarPrestamo(p: any, tipo: 'instrumento' | 'insumo') {
         const idParam = p.cod_prestamo ?? p.cod ?? (Number(p.cod_prestamo ?? p.cod) || null);
         if (!idParam) return;
