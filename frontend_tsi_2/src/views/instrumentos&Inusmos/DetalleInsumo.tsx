@@ -5,7 +5,7 @@ import { getInstrumentosPorInsumo, getListaInstrumentos } from '../../services/I
 import axiosInstance from '../../services/axiosinstance';
 import type { ListaInsumo } from '../../types/insumo';
 import type { ListaInstrumento } from '../../types/instrumento';
-import { crearImagenInsumo } from '../../services/ImagenService';
+import { crearImagenInsumo, ImagenEliminarInsumos } from '../../services/ImagenService';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -153,10 +153,27 @@ export default function DetalleInsumo(){
                             <div className="text-center mb-3">
                                 <img src={previewSrc}
                                     alt={insumo.nombre_insumo ?? 'Insumo'} className="img-fluid rounded" style={{ maxHeight: 300, objectFit: 'contain' }} />
-                                <div className="mt-2">
+                                <div className="mt-2 d-flex justify-content-center gap-2">
                                     <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
                                         {uploadingImage ? 'Cargando...' : 'Añadir imagen'}
                                     </button>
+                                    <button type="button" className="btn btn-outline-danger btn-sm" onClick={async () => {
+                                        if (!insumo?.cod_insumo) return alert('Insumo sin codigo');
+                                        if (!confirm('¿Eliminar la imagen asociada a este insumo?')) return;
+                                        try {
+                                            const res = await ImagenEliminarInsumos(insumo.cod_insumo);
+                                            if (res?.success) {
+                                                setPreviewSrc('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
+                                                alert('Imagen eliminada.');
+                                            } else {
+                                                console.error('Error eliminando imagen:', res?.error ?? res);
+                                                alert('Error eliminando imagen. Revisa la consola.');
+                                            }
+                                        } catch (err) {
+                                            console.error('Error eliminando imagen', err);
+                                            alert('Error eliminando imagen. Revisa la consola.');
+                                        }
+                                    }}>Eliminar imagen</button>
                                 </div>
 
                                 <input

@@ -30,6 +30,19 @@ export async function crearimagen(payload: Record<string, any>) {
     return { success: false, error: resp?.data ?? err.message ?? 'unexpected error' };
   }
 }
+export async function ImagenEliminar(id_usuario : string | number) {
+    try {
+        
+    const imagenUrl = `/imagenes/${id_usuario}`;
+        await axiosInstance.delete(imagenUrl);
+        return { success: true, userDeleted: null };
+    } catch (error:any) {
+      console.error('Error ImagenEliminar:', error?.response ?? error);
+      const payload = error?.response?.data ?? error?.message ?? 'unexpected error';
+      const errorString = typeof payload === 'object' ? JSON.stringify(payload) : String(payload);
+      return { success: false, error: errorString };
+    }
+}
 
 export async function crearImagenInsumo(payload: { cod_insumo: string | number; imagenIns: string }) {
   try {
@@ -58,6 +71,20 @@ export async function getListaImagenesinsumos() {
     console.error('Error al obtener lista de imagenes:', error);
     return [];
   }
+}
+
+export async function ImagenEliminarInsumos(cod_insumo : string | number) {
+    try {
+        
+    const imagenUrl = `/imagenesIns/${cod_insumo}`;
+        await axiosInstance.delete(imagenUrl);
+        return { success: true, userDeleted: null };
+    } catch (error:any) {
+      console.error('Error ImagenEliminarInsumos:', error?.response ?? error);
+      const payload = error?.response?.data ?? error?.message ?? 'unexpected error';
+      const errorString = typeof payload === 'object' ? JSON.stringify(payload) : String(payload);
+      return { success: false, error: errorString };
+    }
 }
 
 // Create image record associated to an instrumento
@@ -126,5 +153,18 @@ export async function getImagenInstrumentoTrPorCod(cod: string | number) {
   } catch (err: any) {
     console.error('Error getImagenInstrumentoTrPorCod:', err);
     return null;
+  }
+}
+
+// Eliminar imagen asociada a un instrumento por su codigo
+export async function eliminarImagenInstrumentoPorCod(cod: string | number) {
+  try {
+    const safe = encodeURIComponent(String(cod));
+    const res = await axiosInstance.delete(`/imagenesTru/${safe}`);
+    return { success: true, data: res.data };
+  } catch (err: any) {
+    console.error('Error eliminarImagenInstrumentoPorCod:', err);
+    const resp = err?.response;
+    return { success: false, error: resp?.data ?? err.message ?? 'unexpected error' };
   }
 }

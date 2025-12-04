@@ -5,7 +5,7 @@ import { getInstrumento, asociarInsumoAInstrumento, getInsumosPorInstrumento, de
 import { getListaInsumos } from '../../services/InsumoService';
 import type { ListaInsumo } from '../../types/insumo';
 import axiosInstance from '../../services/axiosinstance';
-import { crearImagenInstrumento, getImagenInstrumentoTrPorCod } from '../../services/ImagenService';
+import { crearImagenInstrumento, getImagenInstrumentoTrPorCod, eliminarImagenInstrumentoPorCod } from '../../services/ImagenService';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -180,8 +180,25 @@ export default function DetalleInstrumento() {
                                         className="img-fluid rounded"
                                         style={{ maxHeight: 300, objectFit: 'contain' }}
                                     />
-                                    <div className="mt-2">
+                                    <div className="mt-2 d-flex justify-content-center gap-2">
                                         <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} aria-label="Añadir imagen">{uploadingImage ? 'Cargando...' : 'Añadir imagen'}</button>
+                                        <button type="button" className="btn btn-outline-danger btn-sm" onClick={async () => {
+                                            if (!instrumento?.cod_instrumento) return alert('Instrumento sin codigo');
+                                            if (!confirm('¿Eliminar la imagen asociada a este instrumento?')) return;
+                                            try {
+                                                const res = await eliminarImagenInstrumentoPorCod(instrumento.cod_instrumento);
+                                                if (res?.success) {
+                                                    setPreviewSrc('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
+                                                    alert('Imagen eliminada.');
+                                                } else {
+                                                    console.error('Error eliminando imagen:', res?.error ?? res);
+                                                    alert('Error eliminando imagen. Revisa la consola.');
+                                                }
+                                            } catch (err) {
+                                                console.error('Error eliminando imagen', err);
+                                                alert('Error eliminando imagen. Revisa la consola.');
+                                            }
+                                        }} aria-label="Eliminar imagen">Eliminar imagen</button>
                                     </div>
 
                                     <input

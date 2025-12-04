@@ -2,7 +2,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs, useNavigate } from "react
 import { useEffect, useState, useRef } from 'react';
 import axios from "axios";
 import axiosInstance from "../../services/axiosinstance";
-import { crearimagen, getListaImagenes } from '../../services/ImagenService';
+import { crearimagen, getListaImagenes, ImagenEliminar } from '../../services/ImagenService';
 import { actualizarPrestamoInstrumento, actualizarPrestamoInsumo } from '../../services/PrestamoService';
 import { getListaAlergias, crearAlumnoAlergia, getAlergiasPorAlumno, eliminarAlumnoAlergia } from '../../services/AlergiaService';
 import type { Alergia } from '../../types/alergia';
@@ -418,10 +418,28 @@ export default function FichaAlumno() {
                                 className="img-fluid border"
                                 style={{ maxHeight: 220, objectFit: 'cover' }}
                             />
-                            <div className="mt-2">
+                            <div className="mt-2 d-flex gap-2">
                                 <button type="button" className="btn btn-sm btn-primary" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
                                     {uploadingImage ? 'Cargando...' : 'Insertar imagen'}
                                 </button>
+                                <button type="button" className="btn btn-sm btn-outline-danger" onClick={async () => {
+                                    const idUsuario = alumno?.data?.id_usuario ?? alumno?.data?.id_user ?? alumno?.id_user ?? alumno?.id_usuario ?? null;
+                                    if (!idUsuario) return alert('No hay usuario asociado a este alumno');
+                                    if (!confirm('¿Eliminar la imagen asociada a este alumno?')) return;
+                                    try {
+                                        const res = await ImagenEliminar(idUsuario);
+                                        if (res?.success) {
+                                            setImageSrc('https://t4.ftcdn.net/jpg/05/42/36/11/360_F_542361185_VFRJWpR2FH5OiAEVveWO7oZnfSccZfD3.jpg');
+                                            alert('Imagen eliminada.');
+                                        } else {
+                                            console.error('Error eliminando imagen:', res?.error ?? res);
+                                            alert('Error eliminando imagen. Revisa la consola.');
+                                        }
+                                    } catch (err) {
+                                        console.error('Error eliminando imagen', err);
+                                        alert('Error eliminando imagen. Revisa la consola.');
+                                    }
+                                }}>Eliminar imagen</button>
                             </div>
                             <input
                                 ref={fileInputRef}
