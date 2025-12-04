@@ -1,7 +1,8 @@
 import { Link, useLoaderData, type LoaderFunctionArgs, useNavigate } from "react-router-dom";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from "axios";
 import axiosInstance from "../../services/axiosinstance";
+import { crearimagen, getListaImagenes } from '../../services/ImagenService';
 import { actualizarPrestamoInstrumento, actualizarPrestamoInsumo } from '../../services/PrestamoService';
 import { getListaAlergias, crearAlumnoAlergia, getAlergiasPorAlumno, eliminarAlumnoAlergia } from '../../services/AlergiaService';
 import type { Alergia } from '../../types/alergia';
@@ -104,6 +105,10 @@ export default function FichaAlumno() {
     const [addingAlergia, setAddingAlergia] = useState(false);
     const [removingAlergia, setRemovingAlergia] = useState<string | number | null>(null);
     const [apoderadoRut, setApoderadoRut] = useState<string | null>(null);
+    const [imageSrc, setImageSrc] = useState<string>(alumno?.data?.foto ?? alumno?.data?.foto_url ?? 'https://t4.ftcdn.net/jpg/05/42/36/11/360_F_542361185_VFRJWpR2FH5OiAEVveWO7oZnfSccZfD3.jpg');
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const prevObjectUrlRef = useRef<string | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [grupoNombre, setGrupoNombre] = useState<string | null>(null);
     const [prestamosInstrumento, setPrestamosInstrumento] = useState<any[]>([]);
     const [prestamosInsumo, setPrestamosInsumo] = useState<any[]>([]);
@@ -211,6 +216,15 @@ export default function FichaAlumno() {
         loadPrestamos();
         return () => { mounted = false; };
     }, [alumno?.data?.id_usuario, alumno?.data?.id_user]);
+
+    // cleanup object URL when unmounting
+    useEffect(() => {
+        return () => {
+            if (prevObjectUrlRef.current) {
+                try { URL.revokeObjectURL(prevObjectUrlRef.current); } catch (e) { /* ignore */ }
+            }
+        };
+    }, []);
 
     async function handleEntregarPrestamo(p: any, tipo: 'instrumento' | 'insumo') {
         const idParam = p.cod_prestamo ?? p.cod ?? (Number(p.cod_prestamo ?? p.cod) || null);
@@ -360,9 +374,71 @@ export default function FichaAlumno() {
                     <div className="col-md-3 d-flex flex-column justify-content-center align-items-center border bg-primary bg-opacity-50">
                         <div className="text-center">
                             <img
-                                src="https://t4.ftcdn.net/jpg/05/42/36/11/360_F_542361185_VFRJWpR2FH5OiAEVveWO7oZnfSccZfD3.jpg"
+                                src={imageSrc}
                                 alt="Foto del alumno"
                                 className="img-fluid border"
+                                style={{ maxHeight: 220, objectFit: 'cover' }}
+                            />
+                            <div className="mt-2">
+                                <button type="button" className="btn btn-sm btn-primary" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                                    {uploadingImage ? 'Cargando...' : 'Insertar imagen'}
+                                </button>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    // revoke previous object URL if any
+                                    if (prevObjectUrlRef.current) {
+                                        URL.revokeObjectURL(prevObjectUrlRef.current);
+                                    }
+                                    const objUrl = URL.createObjectURL(file);
+                                    prevObjectUrlRef.current = objUrl;
+                                    setImageSrc(objUrl);
+
+                                    // upload to server as JSON with base64 under 'imagenB' (backend expects id_usuario and imagenB)
+                                    try {
+                                        const idUsuario = alumno?.data?.id_usuario ?? alumno?.data?.id_user ?? alumno?.id_user ?? alumno?.id_usuario ?? null;
+                                        setUploadingImage(true);
+
+                                        const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+                                            const reader = new FileReader();
+                                            reader.onload = () => resolve(String(reader.result));
+                                            reader.onerror = () => reject(new Error('FileReader error'));
+                                            reader.readAsDataURL(file);
+                                        });
+
+                                        const dataUrl = await toDataUrl(file);
+                                        // dataUrl is like: data:<mime>;base64,<base64data>
+                                        const base64 = dataUrl.split(',')[1] ?? dataUrl;
+
+                                        const payload: Record<string, any> = { imagenB: base64 };
+                                        if (idUsuario) payload.id_usuario = idUsuario;
+
+                                        // Use service which posts JSON to /imagenes
+                                        const res = await crearimagen(payload);
+                                        console.log('Upload response', res);
+                                        if (res?.success) {
+                                            alert('Imagen subida correctamente.');
+                                            // Optionally, if backend returns a URL, update preview
+                                            const returned = res.data?.data ?? res.data ?? res;
+                                            const url = returned?.url ?? returned?.data?.url ?? returned?.imagen_url ?? null;
+                                            if (url) setImageSrc(url);
+                                        } else {
+                                            console.error('Error subiendo imagen:', res?.error ?? res);
+                                            alert('Error subiendo imagen. Revisa la consola.');
+                                        }
+                                    } catch (err:any) {
+                                        console.error('Error subiendo imagen', err);
+                                        alert('Error subiendo imagen. Revisa la consola.');
+                                    } finally {
+                                        setUploadingImage(false);
+                                    }
+                                }}
                             />
                         </div>
                     </div>
