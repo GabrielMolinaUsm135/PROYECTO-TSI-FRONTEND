@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLoaderData, useNavigate, Link } from 'react-router-dom';
 import { getListaInstrumentos, instrumentoEliminar, getInsumosPorInstrumento, desasociarInsumoDeInstrumento } from '../../services/InstrumentoService';
+import axiosInstance from '../../services/axiosinstance';
 import type { ListaInstrumento } from '../../types/instrumento';
 
 export async function loader() {
@@ -51,6 +52,29 @@ export default function ListaInstrumentos() {
         closeModal();
         navigate('/Instrumentos/ListaInstrumentos');
     };
+
+    // estado para marcar instrumentos que están vinculados a algún insumo
+    const [linkedInstruments, setLinkedInstruments] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadLinked() {
+            try {
+                const res = await axiosInstance.get('/instrumento_insumo');
+                const rels = res.data?.data ?? res.data ?? [];
+                const map: Record<string, boolean> = {};
+                for (const r of Array.isArray(rels) ? rels : []) {
+                    const instCode = r.cod_instrumento ?? r.instrumento_cod ?? r.codInstrumento ?? null;
+                    if (instCode !== null && instCode !== undefined) map[String(instCode)] = true;
+                }
+                if (mounted) setLinkedInstruments(map);
+            } catch (err) {
+                console.warn('No se pudo cargar instrumento_insumo, asumiendo none linked', err);
+            }
+        }
+        loadLinked();
+        return () => { mounted = false; };
+    }, []);
 
     const instrumentos = useLoaderData() as ListaInstrumento[];
     const instrumentosValidos = Array.isArray(instrumentos) ? instrumentos : [];
@@ -145,7 +169,12 @@ export default function ListaInstrumentos() {
                                         <div className="d-flex gap-2">
                                             <Link className="btn btn-sm btn-outline-primary" to={`/Instrumentos/Detalle/${inst.cod_instrumento}`}>Ver</Link>
                                             <Link className="btn btn-sm btn-outline-secondary" to={`/Instrumentos/Editar/${inst.cod_instrumento}`}>Editar</Link>
-                                            <button className="btn btn-sm btn-danger" onClick={() => openModal(inst.cod_instrumento)}>Eliminar</button>
+                                            <button
+                                                className="btn btn-sm btn-danger"
+                                                onClick={() => openModal(inst.cod_instrumento)}
+                                                disabled={Boolean(linkedInstruments[String(inst.cod_instrumento)])}
+                                                title={linkedInstruments[String(inst.cod_instrumento)] ? 'No se puede eliminar: tiene insumos relacionados' : 'Eliminar instrumento'}
+                                            >Eliminar</button>
                                         </div>
                                     </td>
                                 </tr>

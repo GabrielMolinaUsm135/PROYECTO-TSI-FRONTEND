@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLoaderData, useNavigate, Link } from 'react-router-dom';
 import type { ListaInsumo } from '../../types/insumo';
 import { getListaInsumos, insumoEliminar } from '../../services/InsumoService';
+import axiosInstance from '../../services/axiosinstance';
 
 export async function loader() {
     const insumos = await getListaInsumos();
@@ -18,6 +19,29 @@ export default function ListaInsumos(){
 
     const openModal = (cod: string) => { setSelectedCod(cod); setIsModalOpen(true); };
     const closeModal = () => { setIsModalOpen(false); setSelectedCod(null); };
+
+    // estado para marcar insumos que están vinculados a un instrumento (no se pueden eliminar)
+    const [linkedInsumos, setLinkedInsumos] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        let mounted = true;
+        async function loadLinked() {
+            try {
+                const res = await axiosInstance.get('/instrumento_insumo');
+                const rels = res.data?.data ?? res.data ?? [];
+                const setMap: Record<string, boolean> = {};
+                for (const r of Array.isArray(rels) ? rels : []) {
+                    const code = r.cod_insumo ?? r.cod_insumo ?? null;
+                    if (code !== null && code !== undefined) setMap[String(code)] = true;
+                }
+                if (mounted) setLinkedInsumos(setMap);
+            } catch (err) {
+                console.warn('No se pudo cargar instrumento_insumo, asumiendo none linked', err);
+            }
+        }
+        loadLinked();
+        return () => { mounted = false; };
+    }, []);
 
     const handleDelete = async () => {
         if (!selectedCod) return;
@@ -121,7 +145,12 @@ export default function ListaInsumos(){
                                             <div className="d-flex gap-2">
                                                 <Link to={`/Insumos/Detalle/${it.cod_insumo}`} className="btn btn-sm btn-outline-primary">Ver</Link>
                                                 <Link to={`/Insumos/Editar/${it.cod_insumo}`} className="btn btn-sm btn-outline-secondary">Editar</Link>
-                                                <button className="btn btn-sm btn-danger" onClick={() => openModal(it.cod_insumo)}>Eliminar</button>
+                                                <button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => openModal(it.cod_insumo)}
+                                                    disabled={Boolean(linkedInsumos[String(it.cod_insumo)])}
+                                                    title={linkedInsumos[String(it.cod_insumo)] ? 'No se puede eliminar: está vinculado a un instrumento' : 'Eliminar insumo'}
+                                                >Eliminar</button>
                                             </div>
                                         </td>
                                     </tr>

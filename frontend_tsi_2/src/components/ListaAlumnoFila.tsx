@@ -2,10 +2,11 @@ import type { ListaAlumno } from "../types/alumno"
 
 type ListaAlumnoFilaProps = {
     alumno: ListaAlumno
-    openModal: (alumno: ListaAlumno) => void
+    openModal: () => void
+    canDelete?: boolean
 }
 
-export default function ListaAlumnoFila({alumno, openModal}: ListaAlumnoFilaProps) {
+export default function ListaAlumnoFila({alumno, openModal, canDelete = true}: ListaAlumnoFilaProps) {
     return (
         <tr>
             <td>{alumno.rut}</td>
@@ -20,7 +21,9 @@ export default function ListaAlumnoFila({alumno, openModal}: ListaAlumnoFilaProp
                     <button 
                         type="button" 
                         className="btn btn-sm btn-danger" 
-                        onClick={() => openModal(alumno)}
+                        onClick={openModal}
+                        disabled={!canDelete}
+                        title={canDelete ? 'Eliminar alumno' : 'No se puede eliminar: tiene préstamos pendientes'}
                     >
                         Eliminar
                     </button>

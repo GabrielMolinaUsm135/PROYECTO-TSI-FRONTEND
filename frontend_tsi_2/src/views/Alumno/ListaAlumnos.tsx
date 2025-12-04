@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { alumnoEliminar, getListaAlumnos } from "../../services/AlumnoService";
+import { getPrestamosInstrumento, getPrestamosInsumo } from "../../services/PrestamoService";
+import axiosInstance from "../../services/axiosinstance";
 import { Link, useLoaderData, useNavigate } from "react-router-dom";
 import type { ListaAlumno } from "../../types/alumno";
 import ListaAlumnoFila from "../../components/ListaAlumnoFila";
@@ -66,6 +68,48 @@ export default function ListaAlumnos() {
         return activeOrder === 'asc' ? cmp : -cmp;
     });
 
+    // Estado para almacenar ruts que no pueden eliminarse porque tienen préstamos pendientes
+    const [blockedRuts, setBlockedRuts] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        let mounted = true;
+        async function computeBlocked() {
+            try {
+                const [pInst, pIns] = await Promise.all([getPrestamosInstrumento(), getPrestamosInsumo()]);
+                const listInst = Array.isArray(pInst) ? pInst : [];
+                const listIns = Array.isArray(pIns) ? pIns : [];
+                const combined = [...listInst, ...listIns];
+
+                const pendingUserIds = new Set<string>();
+                for (const it of combined) {
+                    const estado: string = (it.estado ?? '').toString().toLowerCase();
+                    if (estado.includes('devuelto')) continue;
+                    const id = it.id_usuario ?? it.id_user ?? it.id ?? null;
+                    if (id !== null && id !== undefined) pendingUserIds.add(String(id));
+                }
+
+                const map: Record<string, boolean> = {};
+                await Promise.all(alumnosValidos.map(async (a) => {
+                    try {
+                        const res = await axiosInstance.get(`/alumno/${encodeURIComponent(String(a.rut))}`);
+                        const al = res.data?.data ?? res.data ?? null;
+                        const uid = al?.id_usuario ?? al?.id_user ?? al?.id ?? null;
+                        map[a.rut] = uid !== null && uid !== undefined && pendingUserIds.has(String(uid));
+                    } catch (err) {
+                        // if any error, assume no blocking prestamos for that rut
+                        map[a.rut] = false;
+                    }
+                }));
+
+                if (mounted) setBlockedRuts(map);
+            } catch (err) {
+                console.error('Error computing blocked ruts', err);
+            }
+        }
+        computeBlocked();
+        return () => { mounted = false; };
+    }, [alumnosValidos]);
+
     return (
         <>
             <div className="row bg-primary text-white py-3 mb-5">
@@ -123,6 +167,7 @@ export default function ListaAlumnos() {
                                     key={alumno.rut}
                                     alumno={alumno}
                                     openModal={() => openModal(alumno.rut)} // Pass the rut to openModal
+                                    canDelete={!blockedRuts[alumno.rut]}
                                 />
                             ))}
                         </tbody>
