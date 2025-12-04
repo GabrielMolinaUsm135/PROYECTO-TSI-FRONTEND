@@ -1,9 +1,11 @@
 import { useLoaderData, Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getInsumo } from '../../services/InsumoService';
 import { getInstrumentosPorInsumo, getListaInstrumentos } from '../../services/InstrumentoService';
+import axiosInstance from '../../services/axiosinstance';
 import type { ListaInsumo } from '../../types/insumo';
 import type { ListaInstrumento } from '../../types/instrumento';
+import { crearImagenInsumo } from '../../services/ImagenService';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -15,6 +17,10 @@ export async function loader({ params }: any) {
 export default function DetalleInsumo(){
     const insumo = useLoaderData() as ListaInsumo | null;
     const [relatedInstruments, setRelatedInstruments] = useState<ListaInstrumento[]>([]);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const prevObjectUrlRef = useRef<string | null>(null);
+    const [previewSrc, setPreviewSrc] = useState<string>('https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png');
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         async function loadRelated() {
@@ -32,6 +38,77 @@ export default function DetalleInsumo(){
         }
         loadRelated();
     }, [insumo]);
+
+    // cleanup object URL when unmounting
+    useEffect(() => {
+        return () => {
+            if (prevObjectUrlRef.current) {
+                try { URL.revokeObjectURL(prevObjectUrlRef.current); } catch (e) { /* ignore */ }
+            }
+        };
+    }, []);
+
+    // load existing image associated with this insumo (if any)
+    useEffect(() => {
+        let mounted = true;
+        async function loadImagenInsumo() {
+            const cod = insumo?.cod_insumo ?? null;
+            if (!cod) return;
+            try {
+                const res = await axiosInstance.get(`/imagenesIns/${encodeURIComponent(String(cod))}`);
+                let payload: any = res.data?.data ?? res.data ?? null;
+                if (!mounted || !payload) return;
+
+                // If the API returned an array or nested data, pick the first relevant node
+                const pickFirst = (p: any) => Array.isArray(p) && p.length > 0 ? p[0] : p;
+                payload = pickFirst(payload);
+                if (payload && payload.data) payload = pickFirst(payload.data);
+
+                // Try many possible keys that backends sometimes use for base64 / blob / url
+                const mime = payload?.mimeType ?? payload?.mime ?? 'image/jpeg';
+
+                const b64Candidates = [
+                    payload?.imageBase64,
+                    payload?.imagenIns,
+                    payload?.imagenInsBase64,
+                    payload?.imagenBase64,
+                    payload?.base64,
+                    payload?.imagenB,
+                    payload?.imagen,
+                    payload?.imagen64,
+                    payload?.imagen_b64,
+                ];
+                const b64 = b64Candidates.find((v: any) => typeof v === 'string' && v.length > 0) ?? null;
+
+                if (b64) {
+                    if (prevObjectUrlRef.current) {
+                        try { URL.revokeObjectURL(prevObjectUrlRef.current); } catch (e) { /* ignore */ }
+                        prevObjectUrlRef.current = null;
+                    }
+                    setPreviewSrc(`data:${mime};base64,${b64}`);
+                    return;
+                }
+
+                const urlCandidates = [
+                    payload?.url,
+                    payload?.imagen_url,
+                    payload?.path,
+                    payload?.ruta,
+                    payload?.publicUrl,
+                    payload?.fileUrl,
+                ];
+                const url = urlCandidates.find((v: any) => typeof v === 'string' && v.length > 0) ?? null;
+                if (url) {
+                    setPreviewSrc(url);
+                    return;
+                }
+            } catch (err) {
+                // ignore, no image for this insumo or fetch error
+            }
+        }
+        loadImagenInsumo();
+        return () => { mounted = false; };
+    }, [insumo?.cod_insumo]);
     if (!insumo) {
         return (
             <div className="container py-5">
@@ -74,8 +151,63 @@ export default function DetalleInsumo(){
 
                         <div className="col-md-5">
                             <div className="text-center mb-3">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/2/27/Instrument_Placeholder.png"
+                                <img src={previewSrc}
                                     alt={insumo.nombre_insumo ?? 'Insumo'} className="img-fluid rounded" style={{ maxHeight: 300, objectFit: 'contain' }} />
+                                <div className="mt-2">
+                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                                        {uploadingImage ? 'Cargando...' : 'Añadir imagen'}
+                                    </button>
+                                </div>
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        if (prevObjectUrlRef.current) {
+                                            try { URL.revokeObjectURL(prevObjectUrlRef.current); } catch (err) { /* ignore */ }
+                                            prevObjectUrlRef.current = null;
+                                        }
+                                        const objUrl = URL.createObjectURL(file);
+                                        prevObjectUrlRef.current = objUrl;
+                                        setPreviewSrc(objUrl);
+
+                                        try {
+                                            setUploadingImage(true);
+                                            const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+                                                const reader = new FileReader();
+                                                reader.onload = () => resolve(String(reader.result));
+                                                reader.onerror = () => reject(new Error('FileReader error'));
+                                                reader.readAsDataURL(file);
+                                            });
+
+                                            const dataUrl = await toDataUrl(file);
+                                            const base64 = dataUrl.split(',')[1] ?? dataUrl;
+                                            const payload: Record<string, any> = { imagenIns: base64 };
+                                            if (insumo?.cod_insumo) payload.cod_insumo = insumo.cod_insumo;
+
+                                            const res = await crearImagenInsumo(payload as any);
+                                            console.log('Upload response', res);
+                                            if (res?.success) {
+                                                const returned = res.data?.data ?? res.data ?? res;
+                                                const url = returned?.url ?? returned?.data?.url ?? returned?.imagen_url ?? null;
+                                                if (url) setPreviewSrc(url);
+                                                alert('Imagen subida correctamente.');
+                                            } else {
+                                                console.error('Error subiendo imagen:', res?.error ?? res);
+                                                alert('Error subiendo imagen. Revisa la consola.');
+                                            }
+                                        } catch (err) {
+                                            console.error('Error subiendo imagen', err);
+                                            alert('Error subiendo imagen. Revisa la consola.');
+                                        } finally {
+                                            setUploadingImage(false);
+                                        }
+                                    }}
+                                />
                             </div>
 
                             <div className="card mt-3">
