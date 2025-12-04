@@ -6,6 +6,7 @@ import axiosInstance from '../../services/axiosinstance';
 import type { ListaInsumo } from '../../types/insumo';
 import type { ListaInstrumento } from '../../types/instrumento';
 import { crearImagenInsumo, ImagenEliminarInsumos } from '../../services/ImagenService';
+import { resizeImageFileToDataUrl, fileToDataUrl } from '../../utils/image';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -198,14 +199,13 @@ export default function DetalleInsumo(){
 
                                         try {
                                             setUploadingImage(true);
-                                            const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-                                                const reader = new FileReader();
-                                                reader.onload = () => resolve(String(reader.result));
-                                                reader.onerror = () => reject(new Error('FileReader error'));
-                                                reader.readAsDataURL(file);
-                                            });
-
-                                            const dataUrl = await toDataUrl(file);
+                                            // Resize first (1200px default), fall back to raw if resize fails
+                                            let dataUrl: string;
+                                            try {
+                                                dataUrl = await resizeImageFileToDataUrl(file, 1200, 0.8);
+                                            } catch (err) {
+                                                dataUrl = await fileToDataUrl(file);
+                                            }
                                             const base64 = dataUrl.split(',')[1] ?? dataUrl;
                                             const payload: Record<string, any> = { imagenIns: base64 };
                                             if (insumo?.cod_insumo) payload.cod_insumo = insumo.cod_insumo;

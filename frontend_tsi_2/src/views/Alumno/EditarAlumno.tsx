@@ -44,6 +44,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     const FormData = Object.fromEntries(await request.formData()) as Record<string, any>;
+    // If the user selected the special option to remove the apoderado, normalize it here
+    if (FormData.rut_apoderado === '__SIN_APODERADO__') {
+        FormData.rut_apoderado = '';
+        FormData.id_apoderado = null;
+    }
     try {
         // Resolve id_apoderado from rut_apoderado if provided
         let resolved_id_apoderado: number | null = null;
@@ -194,6 +199,7 @@ export default function EditarAlumno() {
                             <label htmlFor="rut_apoderado" className="form-label">RUT Apoderado:</label>
                             <select id="rut_apoderado" name="rut_apoderado" required className="form-select" defaultValue={rutApoderadoVal}>
                                 <option value="">Seleccione un RUT</option>
+                                <option value="__SIN_APODERADO__">Quitar apoderado (ninguno)</option>
                                 {rutApoderados.map((rut, index) => (
                                     <option key={index} value={rut}>{rut}</option>
                                 ))}

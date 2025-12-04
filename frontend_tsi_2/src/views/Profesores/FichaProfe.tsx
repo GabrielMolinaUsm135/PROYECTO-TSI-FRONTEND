@@ -75,17 +75,7 @@ export default function FichaProfesor() {
                 </div>
             </div>
             <div className="container mt-5 mb-5">
-                <div className="row h-100 align-items-stretch">
-                    {/* Column 1 */}
-                    <div className="col-md-3 d-flex flex-column justify-content-center align-items-center border bg-primary bg-opacity-50">
-                        <div className="text-center">
-                            <img
-                                src="https://t4.ftcdn.net/jpg/05/42/36/11/360_F_542361185_VFRJWpR2FH5OiAEVveWO7oZnfSccZfD3.jpg"
-                                alt="Foto del profesor"
-                                className="img-fluid border"
-                            />
-                        </div>
-                    </div>
+                <div className="row h-100 align-items-stretch">                    
                     {/* Column 2 */}
                     <div className="col-md-8 d-flex flex-column justify-content-center align-items-start border">
                         <h3 className="text-center w-100">PROFESOR</h3>

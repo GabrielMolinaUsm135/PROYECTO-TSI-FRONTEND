@@ -6,6 +6,7 @@ import { getListaInsumos } from '../../services/InsumoService';
 import type { ListaInsumo } from '../../types/insumo';
 import axiosInstance from '../../services/axiosinstance';
 import { crearImagenInstrumento, getImagenInstrumentoTrPorCod, eliminarImagenInstrumentoPorCod } from '../../services/ImagenService';
+import { resizeImageFileToDataUrl, fileToDataUrl } from '../../utils/image';
 
 export async function loader({ params }: any) {
     const cod = params?.cod;
@@ -223,16 +224,16 @@ export default function DetalleInstrumento() {
 
                                             try {
                                                 setUploadingImage(true);
-                                                const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-                                                    const reader = new FileReader();
-                                                    reader.onload = () => resolve(String(reader.result));
-                                                    reader.onerror = () => reject(new Error('FileReader error'));
-                                                    reader.readAsDataURL(file);
-                                                });
-
-                                                const dataUrl = await toDataUrl(file);
-                                                const base64 = dataUrl.split(',')[1] ?? dataUrl;
-                                                const payload: Record<string, any> = { imagentr: base64, imagenDataUrl: dataUrl };
+                                                    // Resize image to reasonable width before uploading
+                                                    let dataUrl: string;
+                                                    try {
+                                                        dataUrl = await resizeImageFileToDataUrl(file, 1200, 0.8);
+                                                    } catch (err) {
+                                                        // fallback to raw data url if resize fails
+                                                        dataUrl = await fileToDataUrl(file);
+                                                    }
+                                                    const base64 = dataUrl.split(',')[1] ?? dataUrl;
+                                                    const payload: Record<string, any> = { imagentr: base64, imagenDataUrl: dataUrl };
                                                 if (instrumento?.cod_instrumento) payload.cod_instrumento = instrumento.cod_instrumento;
 
                                                 const res = await crearImagenInstrumento(payload as any);

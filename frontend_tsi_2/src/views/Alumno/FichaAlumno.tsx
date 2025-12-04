@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import axios from "axios";
 import axiosInstance from "../../services/axiosinstance";
 import { crearimagen, getListaImagenes, ImagenEliminar } from '../../services/ImagenService';
+import { resizeImageFileToDataUrl, fileToDataUrl } from '../../utils/image';
 import { actualizarPrestamoInstrumento, actualizarPrestamoInsumo } from '../../services/PrestamoService';
 import { getListaAlergias, crearAlumnoAlergia, getAlergiasPorAlumno, eliminarAlumnoAlergia } from '../../services/AlergiaService';
 import type { Alergia } from '../../types/alergia';
@@ -466,14 +467,13 @@ export default function FichaAlumno() {
                                         const idUsuario = alumno?.data?.id_usuario ?? alumno?.data?.id_user ?? alumno?.id_user ?? alumno?.id_usuario ?? null;
                                         setUploadingImage(true);
 
-                                        const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-                                            const reader = new FileReader();
-                                            reader.onload = () => resolve(String(reader.result));
-                                            reader.onerror = () => reject(new Error('FileReader error'));
-                                            reader.readAsDataURL(file);
-                                        });
-
-                                        const dataUrl = await toDataUrl(file);
+                                        // Try to resize image (avatar) to smaller width to reduce upload size
+                                        let dataUrl: string;
+                                        try {
+                                            dataUrl = await resizeImageFileToDataUrl(file, 400, 0.8);
+                                        } catch (err) {
+                                            dataUrl = await fileToDataUrl(file);
+                                        }
                                         // dataUrl is like: data:<mime>;base64,<base64data>
                                         const base64 = dataUrl.split(',')[1] ?? dataUrl;
 
